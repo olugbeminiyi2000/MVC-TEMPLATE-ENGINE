@@ -88,7 +88,7 @@ template_string = ""
 # """
 
 condition_string = """
-{% IF (X AND NOT Y) OR (Z AND (NOT W OR Q)) %}
+{% IF A AND NOT B OR C AND D OR NOT E %}
 Condition evaluated to TRUE
 {% ENDIF %}
 """
