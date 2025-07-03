@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Optional, Dict, Any, Union, List
+from lexical.logic_nodes import logicNode, notNode, andNode, orNode 
 
 logic_iter: int = 3
 
