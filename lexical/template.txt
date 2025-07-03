@@ -1,4 +1,4 @@
-    {% IF A AND B %}
+    {% IF A OR B %}
         First level: A and B
         {% IF C %}
             Second level: C or (D and not E)
