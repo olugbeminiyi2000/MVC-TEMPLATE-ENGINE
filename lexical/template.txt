@@ -1,5 +1,5 @@
-    {% IF A AND B %}
-        First level: A and B
+    {% IF A OR B %}
+        First level: A and B {{first_name}} {{last_name}}
         {% IF C %}
             Second level: C or (D and not E)
             {% IF B %}
@@ -13,7 +13,7 @@
             Second level ELSE: everything else failed
         {% ENDIF %}
     {% ELIF D %}
-        First level ELIF: L or (M and not N)
+        First level ELIF: L or (M and not N) hiii
         {% IF NOT B OR F %}
             Second level: O and P or Q
             {% IF C %}
@@ -39,7 +39,7 @@
             Second level ELSE: everything else failed
         {% ENDIF %}
     {% ELIF D %}
-        First level ELIF: L or (M and not N)
+        First level ELIF: L or (M and not N), i am here
         {% IF NOT B OR F %}
             Second level: O and P or Q
             {% IF C %}
