@@ -1,97 +1,10 @@
+import os
 import re
 import regex
-from typing import List, Match, Pattern, Tuple, Dict, Any
+from typing import List, Match, Pattern, Tuple, Dict, Any, Union
 from lexical.logic_condition import get_logic_chain, logicNode, orNode, andNode, notNode
 from lexical.condition_helper_funcs import does_placeholder_exist
 from lexical.condition_truthy_falsy import get_truthy_falsy_logic, get_truthy_falsy_no_logic
-
-template_string = ""
-
-# condition_string = """
-# {{ valid_variable }}, {{ 123invalid }}, {{ another_valid_one }}, {{ special-char@ }}, {{ _leading_underscore }},
-# {{ space in name }}, {{ camelCaseValid }}, {{ !invalid_start }}, {{ variable_with_numbers123 }}, {{ $invalid_char_in_variable }}, 
-
-# {% IF valid_variable %}, {% IF123invalid %}, {% if another_valid_one %}, {% IF special-char@ %}, {% if _leading_underscore %}, 
-# {% IF space in name %}, {% IFcamelCaseValid %}, {% IF !invalid_start %}, {% IF variable_with_numbers123 %}, {% IF $invalid_char_in_variable %},
-
-# {% ELIF valid_variable %}, {%ELIF123invalid %}, {% elif another_valid_one %}, {% ELIF special-char@ %}, {% elif _leading_underscore %},
-# {% ELIF space in name %}, {% ELIFcamelCaseValid %}, {% ELIF !invalid_start %}, {% ELIF variable_with_numbers123 %}, {% ELIF $invalid_char_in_variable %},
-
-# {% ELSE %}, {% ELSE123invalid %}, {% else invalid_another_valid_one %}, {% ELSE special-char@ %}, {% else _leading_underscore %},
-# {% ELSE space in name %}, {% ELSEcamelCaseValid %}, {% ELSE !invalid_start %}, {% ELSE invalid_as_variable_with_numbers123 %}, {% ELSE $invalid_char_in_variable %},
-
-# {% ENDIF %}, {% ENDIF valid_variable %}, {% ENDIF123invalid %}, {% endif another_valid_one %}, {% ENDIF special-char@ %}, {% endif _leading_underscore %},
-# {% ENDIF space in name %}, {% ENDIFcamelCaseValid %}, {% ENDIF !invalid_start %}, {% ENDIF variable_with_numbers123 %}, {% ENDIF $invalid_char_in_variable %},
-
-# {% IF valid_variable AND variableB %}, {% IF valid_variable AND variableB OR variableC %}, {% IF valid_variable AND variableB NOT variableC %}, 
-# {% IF valid_variable AND variableB AND (NOT variableC) %}, {% IF valid_variable OR another_valid_one %}, {% IF NOT valid_variable %},
-
-# {% ELIF valid_variable AND variableB %}, {% ELIF valid_variable OR another_valid_one %}, {% ELIF NOT valid_variable %}, 
-# {% ELIF valid_variable AND variableB NOT variableC %}, {% ELIF valid_variable AND variableB AND (NOT variableC) %}, 
-
-# {% ELSE valid_variable %}, {% ELSE123invalid %}, {% ELSE special-char@ %}, {% ELSE_variable_not_valid %}, {% ELSE space in name %}, 
-
-# { % ENDIF missing_percent_space %}, {%ENDIF no_space_between_ENDIF_and_placeholder % }, {% ENDIF-missing_space_between_ENDIF_and_placeholder %}, 
-# {% ENDIF_invalid-char$ %}
-# """
-
-# condition_string = """
-# {{ valid_variable }}, {{ another_valid_one }}, {{ camelCaseValid }}, {{ variable_with_numbers123 }}, {{ _leading_underscore }},
-# {{ space_in_name }}, {{ uppercaseVARIABLE }}, {{ mixedCASE_example }}
-
-# {% IF valid_variable %}, {% IF variable_with_numbers123 %}, {% IF camelCaseValid %}, {% IF another_valid_one %}, {% IF space_in_name %},
-# {% IF uppercaseVARIABLE %}, {% IF mixedCASE_example %}
-
-# {% ELIF valid_variable %}, {% ELIF variable_with_numbers123 %}, {% ELIF camelCaseValid %}, {% ELIF another_valid_one %}, {% ELIF space_in_name %},
-# {% ELIF uppercaseVARIABLE %}, {% ELIF mixedCASE_example %}
-
-# {% ELSE %}, {% ELSE %}, {% ELSE %}
-
-# {% ENDIF %}, {% ENDIF %}, {% ENDIF %}
-# """
-
-# condition_string = """
-# {% IF user_logged_in %}
-#     Welcome, {{ username }}!
-# {% ELSE %}
-#     Please log in first.
-# {% ELIF user_is_admin %}  # Incorrect: ELIF after ELSE
-#     You have admin access.
-# {% ENDIF %}
-
-# {% IF user_is_member %}
-#     Membership perks available.
-#     {% ELIF user_is_guest %}
-#         Limited access granted.
-# {% ENDIF %}
-
-# {% IF cart_has_items %}
-#     You have items in your cart.
-#     {% ELSE %}
-#         Your cart is empty.
-#     {% ENDIF %}  # Correct structure
-
-# {% IF order_pending %}
-#     Your order is being processed.
-#     {% IF order_shipped %}  # Error: Nested IF without closing the first block properly
-#         Your order is on the way.
-#     {% ENDIF %}
-# {% ELSE %}
-#     No orders found.
-# {% ENDIF %}
-
-# {% IF discount_applied %}
-#     Special discount applied!
-# {% ELSE %}
-#         Seasonal discount available!
-# {% ENDIF %}
-# """
-
-condition_string = """
-{% IF A AND NOT B OR C AND D OR NOT E %}
-Condition evaluated to TRUE
-{% ENDIF %}
-"""
 
 
 
@@ -106,6 +19,11 @@ class ConditionError(Exception):
         self.message = message
 
 class StructureError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+
+class PlacementError(Exception):
     def __init__(self, message):
         super().__init__(message)
         self.message = message
@@ -145,13 +63,18 @@ class Patterns:
         self.pattern_list = [Patterns.extract_possible_variables, Patterns.extract_possible_if_placeholders, Patterns.extract_possible_endif_placeholders, Patterns.extract_possible_elseif_placeholders, Patterns.extract_possible_else_placeholders]
 
 
+# EXTRACT details from files
+base_path = os.path.dirname(__file__)
+file_path = os.path.join(base_path, "template.txt")
+with open(file_path, "r") as f:
+    condition_string = f.read()
 
 patternObj: Patterns = Patterns()
 total_possible_patterns: str = "|".join(patternObj.pattern_list)
 compiled_possible_patterns: Pattern = re.compile(total_possible_patterns, flags=re.IGNORECASE)
 possible_patterns_match: List[Tuple[str, Match]] = []
 condition_blocks: List[Tuple[str, Match]] = []
-conditions_possibilities: Dict[str, List[str]] = {"if_statement": ["if_statement", "elif_statement", "else_statement"], "elif_statement": ["elif_statement", "else_statement", "endif_statement"], "else_statement": ["endif_statement"], "endif_statement": ["if_statement"]}
+
 
 # Checking for all form of possible match (variable and conditions for now)
 for match in compiled_possible_patterns.finditer(condition_string):
@@ -166,23 +89,23 @@ for match_group, match in possible_patterns_match:
             if not actual_match:
                 raise VariableError("The placeholder {} from column {} to {} is not of python standard.".format(match.group(), match.span()[0], match.span()[1]))
             else:
-                print(actual_match.group())
+                pass
         elif match_group == "if_statement":
             if patternObj.extract_actual_if_placeholders.search(match.group()):
                 condition_blocks.append((match.lastgroup, match))
-                print(match.group())
+                pass
             elif patternObj.extract_actual_if_placeholders_with_logic.search(match.group()):
                 condition_blocks.append((match.lastgroup, match))
-                print(match.group())
+                pass
             else:
                 raise ConditionError("The IF BlockNode {} from column {} to {} is not written properly, here is the syntax {{% IF placholder %}}".format(match.group(), match.span()[0], match.span()[1]))
         elif match_group == "elif_statement":
             if patternObj.extract_actual_elseif_placeholders.search(match.group()):
                 condition_blocks.append((match.lastgroup, match))
-                print(match.group())
+                pass
             elif patternObj.extract_actual_elseif_placeholders_with_logic.search(match.group()):
                 condition_blocks.append((match.lastgroup, match))
-                print(match.group())      
+                pass      
             else:
                 raise ConditionError("The ELIF BlockNode {} from column {} to {} is not written properly, here is the syntax {{% ELIF placholder %}}".format(match.group(), match.span()[0], match.span()[1]))
         elif match_group == "else_statement":
@@ -191,45 +114,64 @@ for match_group, match in possible_patterns_match:
                 raise ConditionError("The ELSE BlockNode {} from column {} to {} is not written properly, here is the syntax {{% ELSE %}}".format(match.group(), match.span()[0], match.span()[1]))
             else:
                 condition_blocks.append((match.lastgroup, match))
-                print(actual_match.group())          
+                pass          
         elif match_group == "endif_statement":
             actual_match = patternObj.extract_actual_endif_placeholders.search(match.group())
             if not actual_match:
                 raise ConditionError("The ENDIF BlockNode {} from column {} to {} is not written properly, here is the syntax {{% ENDIF %}}".format(match.group(), match.span()[0], match.span()[1]))
             else:
                 condition_blocks.append((match.lastgroup, match))
-                print(actual_match.group())
-    except VariableError as e:
-        print(e)
-    except ConditionError as e:
-        print(e)
+                pass
+    except VariableError:
+        raise
+    except ConditionError:
+        raise
 
+print(condition_blocks)
 # checking for structure error in conditions in a template string
 condition_position: int = 0
 condition_length: int = len(condition_blocks)
 last_condition_position: int = condition_length - 1
-
+condition_start_dict: List[Tuple[str, Match]] = []
+condition_start: int = 0
 while condition_position <= last_condition_position:
     try:
+        if condition_start == 0:
+            initial_condition_tuple = condition_blocks[condition_position]
+            if initial_condition_tuple[0] != "if_statement":
+                raise StructureError("Block should start with {{% IF STATEMENT %}} not {}".format(initial_condition_tuple[1].group()))
+            
         current_condition_tuple = condition_blocks[condition_position]
-        if condition_position == last_condition_position:
-            if current_condition_tuple[0] != "endif_statement":
-                raise StructureError("The block should be ended by an ENDIF statement and not {} from column {} to {}".format(current_condition_tuple[1].group(), current_condition_tuple[1].span()[0], current_condition_tuple[1].span()[1]))
-        else:
-            next_condition_tuple = condition_blocks[condition_position + 1]
-            if next_condition_tuple[0] in conditions_possibilities[current_condition_tuple[0]]:
-                condition_position += 1
-            else:
-                raise StructureError("The block(s) that comes after {} should be {} not {} {} from column {} to {}".format(current_condition_tuple[1].group(), conditions_possibilities[current_condition_tuple[0]], next_condition_tuple[0], next_condition_tuple[1].group(), next_condition_tuple[1].span()[0], next_condition_tuple[1].span()[1]))
-    except StructureError as e:
-        print(e)
-        break
+        if current_condition_tuple[0] == "if_statement":
+            condition_start += 1
+            condition_start_dict.append(current_condition_tuple)
+        elif current_condition_tuple[0] == "endif_statement":
+            condition_start -= 1
+            del condition_start_dict[-1]
+        
+        condition_position += 1
+    except StructureError:
+        raise
+else:
+    try:
+        if condition_start != 0:
+            raise StructureError("Missing a {{% ENDIF %}} block for {} at {}".format(condition_start_dict[-1][1].group(), condition_blocks[-1][1].group()))
+    except StructureError:
+        raise
+
+
+
+
+
+
+
 
 # using the possible pattern list, to sequentially order static, dynamic, and condition blocks if no error is thrown
 static_text: str = ""
 current_idx: int = 0
-components: List[str] = []
+components: List[Tuple[str, Union[Match, None]]] = []
 possible_patterns_size: int = len(possible_patterns_match)
+
 for char_idx in range(len(condition_string)):
     if current_idx < possible_patterns_size:
         match_obj = possible_patterns_match[current_idx][1]
@@ -238,8 +180,8 @@ for char_idx in range(len(condition_string)):
         end = match_span[1] - 1
     if char_idx >= start and char_idx <= end:
         if char_idx == match_span[1] - 1:
-            components.append(static_text)
-            components.append(match_obj.group())
+            components.append((static_text, ))
+            components.append((match_obj.group(), match_obj))
             current_idx += 1
             static_text = ""
     else:
@@ -249,10 +191,18 @@ else:
         components.append(static_text)
         static_text = ""
 
-
-print(components, end="\n\n")
-
+print(end="\n\n")
+print(components)
 data_to_render: Dict[str, Any] = {"A": True, "B": False, "C": True, "D": True, "E": True, "F": False, "G": False}
+
+indentation_rule = 4
+show: bool = True
+prev_indentation_level: Union[int, None] = None
+node_level_exist_dict: Dict[int, Dict[str, bool]] = {}
+render_component: List = []
+count: int = 0
+start_if: int = 0
+end_if: Union[int, None] = None
 
 for component in components:
     # TODO 1. Address conditions
@@ -261,16 +211,16 @@ for component in components:
     per component exist and throw an error if it is not seen in the data needed to
     be rendered.
     """
-    condition_pattern_list: List[Pattern] = [re.compile(patternObj.extract_possible_if_placeholders), re.compile(patternObj.extract_possible_elseif_placeholders)]
+    condition_pattern_list: List[Pattern] = [re.compile(patternObj.extract_possible_if_placeholders), re.compile(patternObj.extract_possible_elseif_placeholders), re.compile(patternObj.extract_possible_else_placeholders), re.compile(patternObj.extract_possible_endif_placeholders)]
 
     try:
-        if condition_pattern_list[0].search(component):
-            component_list: List[str] = patternObj.extract_if_var_and_condition.findall(component)
+        if condition_pattern_list[0].search(component[0]):
+            component_list: List[str] = patternObj.extract_if_var_and_condition.findall(component[0])
             exist, result = does_placeholder_exist(data_to_render, component_list)
             if not exist:
                 raise VariableError("Varaible {} is not found checked rendered data argument to verify".format(result))
-        elif condition_pattern_list[1].search(component):
-            component_list: List[str] = patternObj.extract_elseif_var_and_condition.findall(component)
+        elif condition_pattern_list[1].search(component[0]):
+            component_list: List[str] = patternObj.extract_elseif_var_and_condition.findall(component[0])
             exist, result = does_placeholder_exist(data_to_render, component_list)
             if not exist:
                 raise VariableError("Varaible {} is not found checked rendered data argument to verify".format(result))
@@ -278,37 +228,388 @@ for component in components:
         raise
 
     """
-    Second: After successfully checking the variables if they exist  in the rendered data,
-    we have to check if logic exists or not and also find the condition statement is truthy or falsy inorder to append them to the component back.
+    Second: After successfully checking the variables if they exist in the rendered data,
+    we have to check if logic exists or not(for if and elif), then (else/endif) is always True and also find the condition statement is True or False
     """
-    # if condition_pattern_list[0].search(component):
-    #     component_list = patternObj.extract_if_var_and_condition.findall(component)
-    #     print(component_list)
-    #     # return logic_node of type logicNode or None
-    #     logic_node = get_logic_chain(component_list)
-    #     if logic_node:
-    #         boolean: bool = get_truthy_falsy_logic(logic_node, component_list, data_to_render)
-    #     else:
-    #         boolean: bool = get_truthy_falsy_no_logic(component_list, data_to_render)
-    #     # NOTE always reset and clean up the (NOT, AND, OR, LOGIC) linkedlist(head, current) to None
-    #     notNode.reset_not_head()
-    #     andNode.reset_and_head()
-    #     orNode.reset_or_head()
-    #     logicNode.reset_logic_head()
-    #     print(boolean)
+    if condition_pattern_list[0].search(component[0]):
+        component_list = patternObj.extract_if_var_and_condition.findall(component[0])
+        # return logic_node of type logicNode or None
+        logic_node = get_logic_chain(component_list)
+        if logic_node:
+            boolean: bool = get_truthy_falsy_logic(logic_node, component_list, data_to_render)
+        else:
+            boolean: bool = get_truthy_falsy_no_logic(component_list, data_to_render)
+        # NOTE always reset and clean up the (NOT, AND, OR, LOGIC) linkedlist(head, current) to None
+        notNode.reset_not_head()
+        andNode.reset_and_head()
+        orNode.reset_or_head()
+        logicNode.reset_logic_head()
 
-    # elif condition_pattern_list[1].search(component):
-    #     component_list = patternObj.extract_elseif_var_and_condition.findall(component)
-    #     print(component_list)
-    #     # return logic_node of type logicNode or None
-    #     logic_node = get_logic_chain(component_list)
-    #     if logic_node:
-    #         boolean: bool = get_truthy_falsy_logic(logic_node, component_list, data_to_render)
-    #     else:
-    #         boolean: bool = get_truthy_falsy_no_logic(component_list, data_to_render)
-    #     # NOTE always reset and clean up the (NOT, AND, OR, LOGIC) linkedlist(head, current) to None
-    #     notNode.reset_not_head()
-    #     andNode.reset_and_head()
-    #     orNode.reset_or_head()
-    #     logicNode.reset_logic_head()
-    #     print(boolean)
+        # TODO 1: check indentation level of this node
+        index = component[1].span()[0]
+        line_number = condition_string.count('\n', 0, index) + 1
+        column_number = index - condition_string.rfind('\n', 0, index) - 1
+        # TODO 2: check if column number remainder is Zero
+        """
+        If zero: it means it is correctly placed.
+        if not zero: it means it is incorrectly placed throw an error,
+        using the component[1].group(), column_number, line_number, and identation
+        rule.
+        """
+        check_placement = column_number % indentation_rule
+        if check_placement != 0:
+            raise PlacementError("The IF BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(component[1].group(), column_number + 1, line_number, indentation_rule))
+        else:
+            curr_indentation_level = column_number // indentation_rule
+
+        # TODO: set start_if for the first if and increase it by 1
+        # to stop adding other if, and then assign the end_if to 
+        # current_identation_level
+        if start_if == 0:
+            start_if += 1
+            end_if = curr_indentation_level
+
+        # TODO 3: check previous show for true or false
+        if not show:
+            # TODO 4: compare current identation level to the prev_identation_level
+            """
+            if current > prev (identation level):
+            add empty string to the list
+            if current < prev (identation level):
+            perform the change show and level operation
+            """
+            if curr_indentation_level > prev_indentation_level:
+                pass
+            else:
+                # TODO 5: change show and prev(indentation level)
+                """
+                if curr (indentation level) exist in node_level_exist_dict set show to false
+                if curr doesn't exist:
+                    get the evaluated boolean
+                    if evaluated boolean is true: save the curr so that the node level exits in
+                    node_level_exist_dict as {curr: {"evaluated": True}}, then set show to True and
+                    prev (indentation level) to curr (indentation level)
+                    if evaluated boolean is false: do not save
+                    then set show to False and prev to curr.
+                """
+                if curr_indentation_level in node_level_exist_dict:
+                    show = False
+                else:
+                    if boolean:
+                        # saving curr
+                        node_level_exist_dict[curr_indentation_level] = {"evaluated": True}
+                        # assigning show and prev_indentation_level
+                        show = True
+                        prev_indentation_level = curr_indentation_level
+                    else:
+                        # assigning show and prev_indentation_level7
+                        show = False
+                        prev_indentation_level = curr_indentation_level
+        else:
+            # TODO 6: change show and prev(indentation level)
+            """
+            if curr (indentation level) exist in node_level_exist_dict set show to false
+            if curr doesn't exist:
+                get the evaluated boolean
+                if evaluated boolean is true: save the curr so that the node level exits in
+                node_level_exist_dict as {curr: {"evaluated": True}}, then set show to True and
+                prev (indentation level) to curr (indentation level)
+                if evaluated boolean is false: do not save
+                then set show to False and prev to curr.
+            """
+            if curr_indentation_level in node_level_exist_dict:
+                show = False
+            else:
+                if boolean:
+                    # saving curr
+                    node_level_exist_dict[curr_indentation_level] = {"evaluated": True}
+                    # assigning show and prev_indentation_level
+                    show = True
+                    prev_indentation_level = curr_indentation_level
+                else:
+                    # assigning show and prev_indentation_level7
+                    show = False
+                    prev_indentation_level = curr_indentation_level
+
+    elif condition_pattern_list[1].search(component[0]):
+        component_list = patternObj.extract_elseif_var_and_condition.findall(component[0])
+        # return logic_node of type logicNode or None
+        logic_node = get_logic_chain(component_list)
+        if logic_node:
+            boolean: bool = get_truthy_falsy_logic(logic_node, component_list, data_to_render)
+        else:
+            boolean: bool = get_truthy_falsy_no_logic(component_list, data_to_render)
+        # NOTE always reset and clean up the (NOT, AND, OR, LOGIC) linkedlist(head, current) to None
+        notNode.reset_not_head()
+        andNode.reset_and_head()
+        orNode.reset_or_head()
+        logicNode.reset_logic_head()
+
+        # TODO 1: check indentation level of this node
+        index = component[1].span()[0]
+        line_number = condition_string.count('\n', 0, index) + 1
+        column_number = index - condition_string.rfind('\n', 0, index) - 1
+        # TODO 2: check if column number remainder is Zero
+        """
+        If zero: it means it is correctly placed.
+        if not zero: it means it is incorrectly placed throw an error,
+        using the component[1].group(), column_number, line_number, and identation
+        rule.
+        """
+        check_placement = column_number % indentation_rule
+        if check_placement != 0:
+            raise PlacementError("The IF BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(component[1].group(), column_number, line_number, indentation_rule))
+        else:
+            curr_indentation_level = column_number // indentation_rule
+
+        # TODO 3: check previous show for true or false
+        if not show:
+            # TODO 4: compare current identation level to the prev_identation_level
+            """
+            if current > prev (identation level):
+            add empty string to the list
+            if current < prev (identation level):
+            perform the change show and level operation
+            """
+            if curr_indentation_level > prev_indentation_level:
+                pass
+            else:
+                # TODO 5: change show and prev(indentation level)
+                """
+                if curr (indentation level) exist in node_level_exist_dict set show to false
+                if curr doesn't exist:
+                    get the evaluated boolean
+                    if evaluated boolean is true: save the curr so that the node level exits in
+                    node_level_exist_dict as {curr: {"evaluated": True}}, then set show to True and
+                    prev (indentation level) to curr (indentation level)
+                    if evaluated boolean is false: do not save
+                    then set show to False and prev to curr.
+                """
+                if curr_indentation_level in node_level_exist_dict:
+                    show = False
+                else:
+                    if boolean:
+                        # saving curr
+                        node_level_exist_dict[curr_indentation_level] = {"evaluated": True}
+                        # assigning show and prev_indentation_level
+                        show = True
+                        prev_indentation_level = curr_indentation_level
+                    else:
+                        # assigning show and prev_indentation_level7
+                        show = False
+                        prev_indentation_level = curr_indentation_level
+        else:
+            # TODO 6: change show and prev(indentation level)
+            """
+            if curr (indentation level) exist in node_level_exist_dict set show to false
+            if curr doesn't exist:
+                get the evaluated boolean
+                if evaluated boolean is true: save the curr so that the node level exits in
+                node_level_exist_dict as {curr: {"evaluated": True}}, then set show to True and
+                prev (indentation level) to curr (indentation level)
+                if evaluated boolean is false: do not save
+                then set show to False and prev to curr.
+            """
+            if curr_indentation_level in node_level_exist_dict:
+                show = False
+            else:
+                if boolean:
+                    # saving curr
+                    node_level_exist_dict[curr_indentation_level] = {"evaluated": True}
+                    # assigning show and prev_indentation_level
+                    show = True
+                    prev_indentation_level = curr_indentation_level
+                else:
+                    # assigning show and prev_indentation_level7
+                    show = False
+                    prev_indentation_level = curr_indentation_level
+
+    elif condition_pattern_list[2].search(component[0]):
+        boolean: bool = True
+
+        # TODO 1: check indentation level of this node
+        index = component[1].span()[0]
+        line_number = condition_string.count('\n', 0, index) + 1
+        column_number = index - condition_string.rfind('\n', 0, index) - 1
+        # TODO 2: check if column number remainder is Zero
+        """
+        If zero: it means it is correctly placed.
+        if not zero: it means it is incorrectly placed throw an error,
+        using the component[1].group(), column_number, line_number, and identation
+        rule.
+        """
+        check_placement = column_number % indentation_rule
+        if check_placement != 0:
+            raise PlacementError("The IF BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(component[1].group(), column_number, line_number, indentation_rule))
+        else:
+            curr_indentation_level = column_number // indentation_rule
+
+        # TODO 3: check previous show for true or false
+        if not show:
+            # TODO 4: compare current identation level to the prev_identation_level
+            """
+            if current > prev (identation level):
+            add empty string to the list
+            if current < prev (identation level):
+            perform the change show and level operation
+            """
+            if curr_indentation_level > prev_indentation_level:
+                pass
+            else:
+                # TODO 5: change show and prev(indentation level)
+                """
+                if curr (indentation level) exist in node_level_exist_dict set show to false
+                if curr doesn't exist:
+                    get the evaluated boolean
+                    if evaluated boolean is true: save the curr so that the node level exits in
+                    node_level_exist_dict as {curr: {"evaluated": True}}, then set show to True and
+                    prev (indentation level) to curr (indentation level)
+                    if evaluated boolean is false: do not save
+                    then set show to False and prev to curr.
+                """
+                if curr_indentation_level in node_level_exist_dict:
+                    show = False
+                else:
+                    if boolean:
+                        # saving curr
+                        node_level_exist_dict[curr_indentation_level] = {"evaluated": True}
+                        # assigning show and prev_indentation_level
+                        show = True
+                        prev_indentation_level = curr_indentation_level
+                    else:
+                        # assigning show and prev_indentation_level7
+                        show = False
+                        prev_indentation_level = curr_indentation_level
+        else:
+            # TODO 6: change show and prev(indentation level)
+            """
+            if curr (indentation level) exist in node_level_exist_dict set show to false
+            if curr doesn't exist:
+                get the evaluated boolean
+                if evaluated boolean is true: save the curr so that the node level exits in
+                node_level_exist_dict as {curr: {"evaluated": True}}, then set show to True and
+                prev (indentation level) to curr (indentation level)
+                if evaluated boolean is false: do not save
+                then set show to False and prev to curr.
+            """
+            if curr_indentation_level in node_level_exist_dict:
+                show = False
+            else:
+                if boolean:
+                    # saving curr
+                    node_level_exist_dict[curr_indentation_level] = {"evaluated": True}
+                    # assigning show and prev_indentation_level
+                    show = True
+                    prev_indentation_level = curr_indentation_level
+                else:
+                    # assigning show and prev_indentation_level7
+                    show = False
+                    prev_indentation_level = curr_indentation_level
+
+    elif condition_pattern_list[3].search(component[0]):
+        boolean: bool = True
+
+        # TODO 1: check indentation level of this node
+        index = component[1].span()[0]
+        line_number = condition_string.count('\n', 0, index) + 1
+        column_number = index - condition_string.rfind('\n', 0, index) - 1
+        # TODO 2: check if column number remainder is Zero
+        """
+        If zero: it means it is correctly placed.
+        if not zero: it means it is incorrectly placed throw an error,
+        using the component[1].group(), column_number, line_number, and identation
+        rule.
+        """
+        check_placement = column_number % indentation_rule
+        if check_placement != 0:
+            raise PlacementError("The IF BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(component[1].group(), column_number, line_number, indentation_rule))
+        else:
+            curr_indentation_level = column_number // indentation_rule
+
+
+        # TODO 3: check previous show for true or false
+        if not show:
+            # TODO 4: compare current identation level to the prev_identation_level
+            """
+            if current > prev (identation level):
+            add empty string to the list
+            if current < prev (identation level):
+            perform the change show and level operation
+            """
+            if curr_indentation_level > prev_indentation_level:
+                pass
+            else:
+                # TODO 5: change show and prev(indentation level)
+                """
+                if curr (indentation level) exist in node_level_exist_dict set show to false
+                if curr doesn't exist:
+                    get the evaluated boolean
+                    if evaluated boolean is true: save the curr so that the node level exits in
+                    node_level_exist_dict as {curr: {"evaluated": True}}, then set show to True and
+                    prev (indentation level) to curr (indentation level)
+                    if evaluated boolean is false: do not save
+                    then set show to False and prev to curr.
+                """
+                if curr_indentation_level in node_level_exist_dict:
+                    show = False
+                else:
+                    if boolean:
+                        # saving curr
+                        node_level_exist_dict[curr_indentation_level] = {"evaluated": True}
+                        # assigning show and prev_indentation_level
+                        show = True
+                        prev_indentation_level = curr_indentation_level
+                    else:
+                        # assigning show and prev_indentation_level7
+                        show = False
+                        prev_indentation_level = curr_indentation_level
+        else:
+            # TODO 6: change show and prev(indentation level)
+            """
+            if curr (indentation level) exist in node_level_exist_dict set show to false
+            if curr doesn't exist:
+                get the evaluated boolean
+                if evaluated boolean is true: save the curr so that the node level exits in
+                node_level_exist_dict as {curr: {"evaluated": True}}, then set show to True and
+                prev (indentation level) to curr (indentation level)
+                if evaluated boolean is false: do not save
+                then set show to False and prev to curr.
+            """
+            if curr_indentation_level in node_level_exist_dict:
+                show = False
+            else:
+                if boolean:
+                    # saving curr
+                    node_level_exist_dict[curr_indentation_level] = {"evaluated": True}
+                    # assigning show and prev_indentation_level
+                    show = True
+                    prev_indentation_level = curr_indentation_level
+                else:
+                    # assigning show and prev_indentation_level7
+                    show = False
+                    prev_indentation_level = curr_indentation_level
+        
+        # TODO check if the current endif indentation is the same as the
+        # indentation in end_if.
+        """
+            if it is reset show to True, prev_identation_level to None,
+            node_level_exist_dict to {}, start_if to 0 and end_if to None
+        """
+        if end_if == curr_indentation_level:
+            show = True
+            prev_indentation_level = None
+            node_level_exist_dict = {}
+            start_if = 0
+            end_if = None
+
+    else:
+        if show:
+            if not isinstance(component, Tuple):
+                render_component.append(component)
+            else:
+                render_component.append(component[0])
+    count += 1
+
+print(show, prev_indentation_level, start_if, end_if, node_level_exist_dict)
+print("\n")
+print(render_component)

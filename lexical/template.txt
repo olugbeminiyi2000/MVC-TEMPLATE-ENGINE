@@ -1,0 +1,51 @@
+    {% IF A AND B %}
+        First level: A and B
+        {% IF C %}
+            Second level: C or (D and not E)
+            {% IF B %}
+                Third level: F and not G, or H and I
+            {% ELSE %}
+                Third level ELSE: fallback logic
+            {% ENDIF %}
+        {% ELIF C %}
+            Second level ELIF: J and not K
+        {% ELSE %}
+            Second level ELSE: everything else failed
+        {% ENDIF %}
+    {% ELIF D %}
+        First level ELIF: L or (M and not N)
+        {% IF NOT B OR F %}
+            Second level: O and P or Q
+            {% IF C %}
+                Third level: R and not S or T
+            {% ENDIF %}
+        {% ENDIF %}
+    {% ELSE %}
+    First level ELSE block
+    {% ENDIF %}
+
+    {% IF A AND B %}
+        First level: A and B
+        {% IF C %}
+            Second level: C or (D and not E)
+            {% IF B %}
+                Third level: F and not G, or H and I
+            {% ELSE %}
+                Third level ELSE: fallback logic
+            {% ENDIF %}
+        {% ELIF C %}
+            Second level ELIF: J and not K
+        {% ELSE %}
+            Second level ELSE: everything else failed
+        {% ENDIF %}
+    {% ELIF D %}
+        First level ELIF: L or (M and not N)
+        {% IF NOT B OR F %}
+            Second level: O and P or Q
+            {% IF C %}
+                Third level: R and not S or T
+            {% ENDIF %}
+        {% ENDIF %}
+    {% ELSE %}
+    First level ELSE block
+    {% ENDIF %}

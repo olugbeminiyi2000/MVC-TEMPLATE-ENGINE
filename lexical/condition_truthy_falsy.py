@@ -48,15 +48,16 @@ class rangeDict(Dict):
         return None
     
 
-range_map_obj = rangeDict()
+
 
 def get_truthy_falsy_logic(logic_node: logicNode, component_list: List[str], data_to_render: Dict[str, Any]) -> bool:
+    # cleanup previously used range dict object by creating a new one
+    range_map_obj = rangeDict()
     
     # traverse through logic Node using the while loop
     # to get access the value in the data variables of logic (NOT|AND|OR)
     while logic_node:
         data: Dict[str, Any] = logic_node.data
-        print(range_map_obj)
 
         # solve for NOT logic
         if data['data'] == "NOT":
@@ -123,7 +124,6 @@ def get_truthy_falsy_logic(logic_node: logicNode, component_list: List[str], dat
                 range_map_obj.mutate_collection_one(dynamically_pick_key, before_logic_position, after_logic_position, boolean)
         
         logic_node: logicNode = logic_node.next
-    print(range_map_obj)
     return range_map_obj.get_final_result()
 
     

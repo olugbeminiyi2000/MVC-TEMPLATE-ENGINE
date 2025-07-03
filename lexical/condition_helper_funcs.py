@@ -13,3 +13,4 @@ def does_placeholder_exist(rendered_data: Dict[str, Any], component_list: List[s
             return (False, component)
     else:
         return (True, None)
+
