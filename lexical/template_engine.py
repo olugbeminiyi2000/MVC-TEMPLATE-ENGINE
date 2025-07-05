@@ -1,3 +1,16 @@
+"""
+Template Engine - Main Parser
+
+This file is the main entry point for parsing and rendering templates that include variable placeholders and logic blocks (IF, ELIF, ELSE, ENDIF).
+It extracts template content, parses and validates logic/variable patterns, checks for errors, and renders the final output based on the provided context data.
+
+Key steps:
+- Extract template content and compile regex patterns.
+- Match all possible variable and logic blocks in the template.
+- Validate the structure of IF/ELIF/ELSE/ENDIF blocks.
+- Parse the template into sequential components (static text, variables, logic blocks).
+- For each component, check variable existence, evaluate logic, validate indentation, and assemble the output.
+"""
 import os
 import re
 from typing import List, Match, Pattern, Tuple, Dict, Any, Union
@@ -16,7 +29,7 @@ with open(file_path, "r") as f:
     template_content = f.read()
 
 patterns = Patterns()
-total_possible_patterns: str = "|".join(patterns.pattern_list)
+total_possible_patterns: str = "|".join(patterns.pattern_sequence)
 compiled_possible_patterns: Pattern = re.compile(total_possible_patterns, flags=re.IGNORECASE)
 possible_patterns_match: List[Tuple[str, Match]] = []
 condition_blocks: List[Tuple[str, Match]] = []
@@ -108,42 +121,42 @@ else:
 
 # TODO: arrange variables and conditions in a list
 # using the possible pattern list, to sequentially order static, dynamic, and condition blocks if no error is thrown
-static_text: str = ""
-current_idx: int = 0
+current_pattern_index: int = 0
+current_static_text: str = ""
 parsed_components: List[Tuple[str, Union[Match, None]]] = []
 possible_patterns_size: int = len(possible_patterns_match)
 
 for char_idx in range(len(template_content)):
-    if current_idx < possible_patterns_size:
-        match_obj = possible_patterns_match[current_idx][1]
+    if current_pattern_index < possible_patterns_size:
+        match_obj = possible_patterns_match[current_pattern_index][1]
         match_span = match_obj.span()
         start = match_span[0]
         end = match_span[1] - 1
     if char_idx >= start and char_idx <= end:
         if char_idx == match_span[1] - 1:
-            parsed_components.append((static_text, ))
+            parsed_components.append((current_static_text, ))
             parsed_components.append((match_obj.group(), match_obj))
-            current_idx += 1
-            static_text = ""
+            current_pattern_index += 1
+            current_static_text = ""
     else:
-        static_text += template_content[char_idx]
+        current_static_text += template_content[char_idx]
 else:
-    if static_text:
-        parsed_components.append(static_text)
-        static_text = ""
+    if current_static_text:
+        parsed_components.append(current_static_text)
+        current_static_text = ""
 
 print(end="\n\n")
 print(parsed_components)
 rendered_output: Dict[str, Any] = {"A": True, "B": False, "C": True, "D": True, "E": True, "F": False, "G": False, "first_name": "Emmanuel", "last_name": "Obolo"}
 
 indentation_rule = 4
-current_indent_level: Union[int, None] = None
+should_render: bool = True
 previous_indent_level: Union[int, None] = None
-indent_level_evaluated: Dict[int, Dict[str, bool]] = {}
-render_component: List = []
-count: int = 0
-start_if: int = 0
-end_if: Union[int, None] = None
+indent_level_eval_map: Dict[int, Dict[str, bool]] = {}
+rendered_output_list: List = []
+component_counter: int = 0
+if_block_depth: int = 0
+if_block_indent_level: Union[int, None] = None
 
 for component in parsed_components:
     # TODO 1. Address conditions
@@ -154,7 +167,6 @@ for component in parsed_components:
     Also do that for normal placeholders not in if or elseif conditions
     """
     condition_pattern_list: List[Pattern] = [re.compile(patterns.extract_possible_if_placeholders), re.compile(patterns.extract_possible_elseif_placeholders), re.compile(patterns.extract_possible_else_placeholders), re.compile(patterns.extract_possible_endif_placeholders)]
-
     variable_pattern_list: List[Pattern] = [patterns.extract_actual_variables, patterns.cleanup_actual_variables]
 
     try:
@@ -167,7 +179,7 @@ for component in parsed_components:
             component_list: List[str] = patterns.extract_elseif_var_and_condition.findall(component[0])
             exist, result = all_placeholders_exist(rendered_output, component_list)
             if not exist:
-                raise VariableError("Varaible {} is not found checked rendered data argument to verify".format(result))
+                raise VariableError("Varaible {} is not found checked rendered data argument to ve rify".format(result))
         elif variable_pattern_list[0].search(component[0]):
             matched_var_obj: Match[str] = variable_pattern_list[0].search(component[0])
             cleaned_up_var_obj: Match[str] = variable_pattern_list[1].search(matched_var_obj.group())
@@ -175,9 +187,6 @@ for component in parsed_components:
             exist, result = variable_exists(rendered_output, var_string)
             if not exist:
                 raise VariableError("Varaible {} is not found checked rendered data argument to verify".format(result))         
-
-        
-        
     except VariableError:
         raise
 
@@ -221,15 +230,48 @@ for component in parsed_components:
         # TODO: set start_if for the first if and increase it by 1
         # to stop adding other if, and then assign the end_if to 
         # current_identation_level
-        if start_if == 0:
-            start_if += 1
-            end_if = curr_indentation_level
+        if if_block_depth == 0:
+            if_block_depth += 1
+            if_block_indent_level = curr_indentation_level
 
         # TODO 3: check previous show for true or false
-        if current_indent_level is None or current_indent_level < curr_indentation_level:
-            current_indent_level = curr_indentation_level
+        if not should_render:
+            # TODO 4: compare current identation level to the prev_identation_level
+            """
+            if current > prev (identation level):
+            add empty string to the list
+            if current < prev (identation level):
+            perform the change show and level operation
+            """
+            if curr_indentation_level > previous_indent_level:
+                pass
+            else:
+                # TODO 5: change show and prev(indentation level)
+                """
+                if curr (indentation level) exist in node_level_exist_dict set show to false
+                if curr doesn't exist:
+                    get the evaluated boolean
+                    if evaluated boolean is true: save the curr so that the node level exits in
+                    node_level_exist_dict as {curr: {"evaluated": True}}, then set show to True and
+                    prev (indentation level) to curr (indentation level)
+                    if evaluated boolean is false: do not save
+                    then set show to False and prev to curr.
+                """
+                if curr_indentation_level in indent_level_eval_map:
+                    should_render = False
+                else:
+                    if boolean:
+                        # saving curr
+                        indent_level_eval_map[curr_indentation_level] = {"evaluated": True}
+                        # assigning show and prev_indentation_level
+                        should_render = True
+                        previous_indent_level = curr_indentation_level
+                    else:
+                        # assigning show and prev_indentation_level7
+                        should_render = False
+                        previous_indent_level = curr_indentation_level
         else:
-            # TODO 5: change show and prev(indentation level)
+            # TODO 6: change show and prev(indentation level)
             """
             if curr (indentation level) exist in node_level_exist_dict set show to false
             if curr doesn't exist:
@@ -240,13 +282,19 @@ for component in parsed_components:
                 if evaluated boolean is false: do not save
                 then set show to False and prev to curr.
             """
-            if curr_indentation_level in indent_level_evaluated:
-                current_indent_level = None
-            elif boolean:
-                # saving curr
-                indent_level_evaluated[curr_indentation_level] = {"evaluated": True}
-                # assigning show and prev_indentation_level
-                current_indent_level = curr_indentation_level
+            if curr_indentation_level in indent_level_eval_map:
+                should_render = False
+            else:
+                if boolean:
+                    # saving curr
+                    indent_level_eval_map[curr_indentation_level] = {"evaluated": True}
+                    # assigning show and prev_indentation_level
+                    should_render = True
+                    previous_indent_level = curr_indentation_level
+                else:
+                    # assigning show and prev_indentation_level7
+                    should_render = False
+                    previous_indent_level = curr_indentation_level
 
     elif condition_pattern_list[1].search(component[0]):
         component_list = patterns.extract_elseif_var_and_condition.findall(component[0])
@@ -280,10 +328,43 @@ for component in parsed_components:
             curr_indentation_level = column_number // indentation_rule
 
         # TODO 3: check previous show for true or false
-        if current_indent_level is None or current_indent_level < curr_indentation_level:
-            current_indent_level = curr_indentation_level
+        if not should_render:
+            # TODO 4: compare current identation level to the prev_identation_level
+            """
+            if current > prev (identation level):
+            add empty string to the list
+            if current < prev (identation level):
+            perform the change show and level operation
+            """
+            if curr_indentation_level > previous_indent_level:
+                pass
+            else:
+                # TODO 5: change show and prev(indentation level)
+                """
+                if curr (indentation level) exist in node_level_exist_dict set show to false
+                if curr doesn't exist:
+                    get the evaluated boolean
+                    if evaluated boolean is true: save the curr so that the node level exits in
+                    node_level_exist_dict as {curr: {"evaluated": True}}, then set show to True and
+                    prev (indentation level) to curr (indentation level)
+                    if evaluated boolean is false: do not save
+                    then set show to False and prev to curr.
+                """
+                if curr_indentation_level in indent_level_eval_map:
+                    should_render = False
+                else:
+                    if boolean:
+                        # saving curr
+                        indent_level_eval_map[curr_indentation_level] = {"evaluated": True}
+                        # assigning show and prev_indentation_level
+                        should_render = True
+                        previous_indent_level = curr_indentation_level
+                    else:
+                        # assigning show and prev_indentation_level7
+                        should_render = False
+                        previous_indent_level = curr_indentation_level
         else:
-            # TODO 5: change show and prev(indentation level)
+            # TODO 6: change show and prev(indentation level)
             """
             if curr (indentation level) exist in node_level_exist_dict set show to false
             if curr doesn't exist:
@@ -294,13 +375,19 @@ for component in parsed_components:
                 if evaluated boolean is false: do not save
                 then set show to False and prev to curr.
             """
-            if curr_indentation_level in indent_level_evaluated:
-                current_indent_level = None
-            elif boolean:
-                # saving curr
-                indent_level_evaluated[curr_indentation_level] = {"evaluated": True}
-                # assigning show and prev_indentation_level
-                current_indent_level = curr_indentation_level
+            if curr_indentation_level in indent_level_eval_map:
+                should_render = False
+            else:
+                if boolean:
+                    # saving curr
+                    indent_level_eval_map[curr_indentation_level] = {"evaluated": True}
+                    # assigning show and prev_indentation_level
+                    should_render = True
+                    previous_indent_level = curr_indentation_level
+                else:
+                    # assigning show and prev_indentation_level7
+                    should_render = False
+                    previous_indent_level = curr_indentation_level
 
     elif condition_pattern_list[2].search(component[0]):
         boolean: bool = True
@@ -323,10 +410,43 @@ for component in parsed_components:
             curr_indentation_level = column_number // indentation_rule
 
         # TODO 3: check previous show for true or false
-        if current_indent_level is None or current_indent_level < curr_indentation_level:
-            current_indent_level = curr_indentation_level
+        if not should_render:
+            # TODO 4: compare current identation level to the prev_identation_level
+            """
+            if current > prev (identation level):
+            add empty string to the list
+            if current < prev (identation level):
+            perform the change show and level operation
+            """
+            if curr_indentation_level > previous_indent_level:
+                pass
+            else:
+                # TODO 5: change show and prev(indentation level)
+                """
+                if curr (indentation level) exist in node_level_exist_dict set show to false
+                if curr doesn't exist:
+                    get the evaluated boolean
+                    if evaluated boolean is true: save the curr so that the node level exits in
+                    node_level_exist_dict as {curr: {"evaluated": True}}, then set show to True and
+                    prev (indentation level) to curr (indentation level)
+                    if evaluated boolean is false: do not save
+                    then set show to False and prev to curr.
+                """
+                if curr_indentation_level in indent_level_eval_map:
+                    should_render = False
+                else:
+                    if boolean:
+                        # saving curr
+                        indent_level_eval_map[curr_indentation_level] = {"evaluated": True}
+                        # assigning show and prev_indentation_level
+                        should_render = True
+                        previous_indent_level = curr_indentation_level
+                    else:
+                        # assigning show and prev_indentation_level7
+                        should_render = False
+                        previous_indent_level = curr_indentation_level
         else:
-            # TODO 5: change show and prev(indentation level)
+            # TODO 6: change show and prev(indentation level)
             """
             if curr (indentation level) exist in node_level_exist_dict set show to false
             if curr doesn't exist:
@@ -337,13 +457,19 @@ for component in parsed_components:
                 if evaluated boolean is false: do not save
                 then set show to False and prev to curr.
             """
-            if curr_indentation_level in indent_level_evaluated:
-                current_indent_level = None
-            elif boolean:
-                # saving curr
-                indent_level_evaluated[curr_indentation_level] = {"evaluated": True}
-                # assigning show and prev_indentation_level
-                current_indent_level = curr_indentation_level
+            if curr_indentation_level in indent_level_eval_map:
+                should_render = False
+            else:
+                if boolean:
+                    # saving curr
+                    indent_level_eval_map[curr_indentation_level] = {"evaluated": True}
+                    # assigning show and prev_indentation_level
+                    should_render = True
+                    previous_indent_level = curr_indentation_level
+                else:
+                    # assigning show and prev_indentation_level7
+                    should_render = False
+                    previous_indent_level = curr_indentation_level
 
     elif condition_pattern_list[3].search(component[0]):
         boolean: bool = True
@@ -365,12 +491,44 @@ for component in parsed_components:
         else:
             curr_indentation_level = column_number // indentation_rule
 
-
         # TODO 3: check previous show for true or false
-        if current_indent_level is None or current_indent_level < curr_indentation_level:
-            current_indent_level = curr_indentation_level
+        if not should_render:
+            # TODO 4: compare current identation level to the prev_identation_level
+            """
+            if current > prev (identation level):
+            add empty string to the list
+            if current < prev (identation level):
+            perform the change show and level operation
+            """
+            if curr_indentation_level > previous_indent_level:
+                pass
+            else:
+                # TODO 5: change show and prev(indentation level)
+                """
+                if curr (indentation level) exist in node_level_exist_dict set show to false
+                if curr doesn't exist:
+                    get the evaluated boolean
+                    if evaluated boolean is true: save the curr so that the node level exits in
+                    node_level_exist_dict as {curr: {"evaluated": True}}, then set show to True and
+                    prev (indentation level) to curr (indentation level)
+                    if evaluated boolean is false: do not save
+                    then set show to False and prev to curr.
+                """
+                if curr_indentation_level in indent_level_eval_map:
+                    should_render = False
+                else:
+                    if boolean:
+                        # saving curr
+                        indent_level_eval_map[curr_indentation_level] = {"evaluated": True}
+                        # assigning show and prev_indentation_level
+                        should_render = True
+                        previous_indent_level = curr_indentation_level
+                    else:
+                        # assigning show and prev_indentation_level7
+                        should_render = False
+                        previous_indent_level = curr_indentation_level
         else:
-            # TODO 5: change show and prev(indentation level)
+            # TODO 6: change show and prev(indentation level)
             """
             if curr (indentation level) exist in node_level_exist_dict set show to false
             if curr doesn't exist:
@@ -381,13 +539,19 @@ for component in parsed_components:
                 if evaluated boolean is false: do not save
                 then set show to False and prev to curr.
             """
-            if curr_indentation_level in indent_level_evaluated:
-                current_indent_level = None
-            elif boolean:
-                # saving curr
-                indent_level_evaluated[curr_indentation_level] = {"evaluated": True}
-                # assigning show and prev_indentation_level
-                current_indent_level = curr_indentation_level
+            if curr_indentation_level in indent_level_eval_map:
+                should_render = False
+            else:
+                if boolean:
+                    # saving curr
+                    indent_level_eval_map[curr_indentation_level] = {"evaluated": True}
+                    # assigning show and prev_indentation_level
+                    should_render = True
+                    previous_indent_level = curr_indentation_level
+                else:
+                    # assigning show and prev_indentation_level7
+                    should_render = False
+                    previous_indent_level = curr_indentation_level
         
         # TODO check if the current endif indentation is the same as the
         # indentation in end_if.
@@ -395,26 +559,27 @@ for component in parsed_components:
             if it is reset show to True, prev_identation_level to None,
             node_level_exist_dict to {}, start_if to 0 and end_if to None
         """
-        if end_if == curr_indentation_level:
-            current_indent_level = None
-            indent_level_evaluated = {}
-            start_if = 0
-            end_if = None
+        if if_block_indent_level == curr_indentation_level:
+            should_render = True
+            previous_indent_level = None
+            indent_level_eval_map = {}
+            if_block_depth = 0
+            if_block_indent_level = None
 
     elif variable_pattern_list[0].search(component[0]):
         matched_var_obj: Match[str] = variable_pattern_list[0].search(component[0])
         cleaned_up_var_obj: Match[str] = variable_pattern_list[1].search(matched_var_obj.group())
-        if current_indent_level is not None:
-            render_component.append(rendered_output[cleaned_up_var_obj.group()])
+        if should_render:
+            rendered_output_list.append(rendered_output[cleaned_up_var_obj.group()])
 
     else:
-        if current_indent_level is not None:
+        if should_render:
             if not isinstance(component, Tuple):
-                render_component.append(component)
+                rendered_output_list.append(component)
             else:
-                render_component.append(component[0])
-    count += 1
+                rendered_output_list.append(component[0])
+    component_counter += 1
 
-print(current_indent_level, start_if, end_if, indent_level_evaluated)
+print(should_render, previous_indent_level, if_block_depth, if_block_indent_level, indent_level_eval_map)
 print("\n")
-print(render_component)
+print(rendered_output_list)

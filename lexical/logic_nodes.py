@@ -1,45 +1,69 @@
 from __future__ import annotations
 from typing import Optional, Dict, Any, Union, List
 
-logic_iter: int = 3
+"""
+Logic Node Classes for Template Engine
+
+Defines the node structures for representing logic operators (NOT, AND, OR) as linked lists.
+Each node type manages its own chain, and the base logicNode class manages the overall logic chain.
+"""
+
+# MAX_LOGIC_OPERATOR_TYPES represents the number of logic operators (NOT, AND, OR).
+# It is used to limit the maximum number of logic chains that can be joined together.
+MAX_LOGIC_OPERATOR_TYPES: int = 3
 
 class logicNode:
+    """
+    Base class for all logic nodes in the logic chain.
+    Manages the head/current pointers and provides methods to build and display the logic chain.
+    """
     __logic_head_node: Union[logicNode, None] = None
     __logic_current_node: Union[logicNode, None] = None
 
     @classmethod
     def reset_logic_head(cls) -> None:
+        """Reset the head and current pointers of the logic chain to None."""
         cls.__logic_head_node = None
         cls.__logic_current_node = None
 
     @classmethod
     def get_logic_head(cls) -> Union[logicNode, None]:
+        """Return the head node of the logic chain."""
         return cls.__logic_head_node
     
     @classmethod
-    def build_logic_chain(cls, logic_dict: Dict[int, List[Union['notNode', 'andNode', 'orNode']]]) -> None:
-        for i in range(0, logic_iter):
+    def build_logic_chain(cls, logic_chain_map: Dict[int, List[Union['notNode', 'andNode', 'orNode']]]) -> None:
+        """
+        Build the logic chain by joining the NOT, AND, and OR chains in order.
+        The number of chains joined is limited by MAX_LOGIC_OPERATOR_TYPES.
+        """
+        for i in range(0, MAX_LOGIC_OPERATOR_TYPES):
             if not cls.__logic_head_node:
-                cls.__logic_head_node = logic_dict[i][0]
-                cls.__logic_current_node = logic_dict[i][1]
+                cls.__logic_head_node = logic_chain_map[i][0]
+                cls.__logic_current_node = logic_chain_map[i][1]
             else:
                 if cls.__logic_current_node:
-                    cls.__logic_current_node.next = logic_dict[i][0]
-                    cls.__logic_current_node = logic_dict[i][1]
+                    cls.__logic_current_node.next = logic_chain_map[i][0]
+                    cls.__logic_current_node = logic_chain_map[i][1]
     
     @classmethod
     def display_logic_chain(cls) -> None:
-        current_node: Union[logicNode, None] = cls.__logic_head_node
-        chain_str = ""
-        while current_node is not None:
-            data = getattr(current_node, "data", None)
-            next_val = "None" if getattr(current_node, "next", None) is None else "node"
-            chain_str += f"node{{{data}, {next_val}}} -> "
-            current_node = getattr(current_node, "next", None)
-        chain_str += "None"
-        print(chain_str)
+        """Print a string representation of the current logic chain for debugging."""
+        node_cursor: Union[logicNode, None] = cls.__logic_head_node
+        chain_repr = ""
+        while node_cursor is not None:
+            node_data = getattr(node_cursor, "data", None)
+            next_node_repr = "None" if getattr(node_cursor, "next", None) is None else "node"
+            chain_repr += f"node{{{node_data}, {next_node_repr}}} -> "
+            node_cursor = getattr(node_cursor, "next", None)
+        chain_repr += "None"
+        print(chain_repr)
 
 class notNode(logicNode):
+    """
+    Node representing the NOT logic operator.
+    Manages its own chain of NOT nodes.
+    """
     __not_head_node: Optional['notNode'] = None
     __not_current_node: Optional['notNode'] = None
 
@@ -49,19 +73,23 @@ class notNode(logicNode):
 
     @classmethod
     def reset_not_head(cls) -> None:
+        """Reset the head and current pointers of the NOT chain to None."""
         cls.__not_head_node = None
         cls.__not_current_node = None
 
     @classmethod
     def get_not_head(cls) -> Union['notNode', None]:
+        """Return the head node of the NOT chain."""
         return cls.__not_head_node
 
     @classmethod
     def get_not_current(cls) -> Union['notNode', None]:
+        """Return the current node of the NOT chain."""
         return cls.__not_current_node
     
     @classmethod
     def add_new_not_node(cls, new_not_node: 'notNode') -> None:
+        """Add a new NOT node to the end of the NOT chain."""
         not_head_node: Union['notNode', None] = cls.__not_head_node
         if not not_head_node:
             cls.__not_head_node = new_not_node

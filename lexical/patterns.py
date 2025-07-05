@@ -1,7 +1,31 @@
+"""
+Regex Patterns for Template Parsing
+
+This file contains all regular expressions used to parse variable placeholders and logic blocks in template files.
+"""
+
 import re
 import regex
 
 class Patterns:
+    """
+    Holds all regex patterns for extracting variables and logic blocks from templates.
+    - extract_possible_variables: Matches any variable placeholder (e.g., {{ variable }}).
+    - extract_actual_variables: Matches valid variable names inside placeholders.
+    - cleanup_actual_variables: Cleans up variable names for validation.
+    - extract_possible_if_placeholders: Matches IF logic blocks.
+    - extract_actual_if_placeholders: Matches valid IF blocks with a single variable.
+    - extract_actual_if_placeholders_with_logic: Matches IF blocks with logic (AND, OR, NOT).
+    - extract_possible_elseif_placeholders: Matches ELIF logic blocks.
+    - extract_actual_elseif_placeholders: Matches valid ELIF blocks with a single variable.
+    - extract_actual_elseif_placeholders_with_logic: Matches ELIF blocks with logic.
+    - extract_possible_else_placeholders: Matches ELSE blocks.
+    - extract_actual_else_placeholders: Matches valid ELSE blocks.
+    - extract_possible_endif_placeholders: Matches ENDIF blocks.
+    - extract_actual_endif_placeholders: Matches valid ENDIF blocks.
+    - extract_elseif_var_and_condition: Extracts variables and logic operators from ELIF blocks.
+    - extract_if_var_and_condition: Extracts variables and logic operators from IF blocks.
+    """
     # patterns for (variable)
     extract_possible_variables = r"(?P<variables>{{\s*.*?\s*}})"
     extract_actual_variables = re.compile('{{[A-Za-z_]+[A-Za-z0-9_]*}}|{{\s*[A-Za-z_]+[A-Za-z0-9_]*\s*}}')
@@ -30,7 +54,7 @@ class Patterns:
     extract_if_var_and_condition = regex.compile('(?:AND|OR|NOT)|(?<=IF\s+)[A-Za-z_]+[A-Za-z0-9_]*|(?<=AND\s+|OR\s+|NOT\s+)[A-Za-z_]+[A-Za-z0-9_]*')
 
     def __init__(self):
-        self.pattern_list = [
+        self.pattern_sequence = [
             Patterns.extract_possible_variables,
             Patterns.extract_possible_if_placeholders,
             Patterns.extract_possible_endif_placeholders,
