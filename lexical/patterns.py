@@ -53,11 +53,24 @@ class Patterns:
     extract_elseif_var_and_condition = regex.compile('(?:AND|OR|NOT)|(?<=ELIF\s+)[A-Za-z_]+[A-Za-z0-9_]*|(?<=AND\s+|OR\s+|NOT\s+)[A-Za-z_]+[A-Za-z0-9_]*')
     extract_if_var_and_condition = regex.compile('(?:AND|OR|NOT)|(?<=IF\s+)[A-Za-z_]+[A-Za-z0-9_]*|(?<=AND\s+|OR\s+|NOT\s+)[A-Za-z_]+[A-Za-z0-9_]*')
 
+    # pattern for matching for loop
+    extract_possible_for_loop_placeholders = r"(?P<for_loop_statement>{\s*%\s*FOR\s*.*?\s*%\s*})"
+    extract_actual_for_loop_placeholders = re.compile('{%\s+FOR\s+[A-Za-z_]+[A-Za-z0-9_]*\s+IN\s+[A-Za-z_]+[A-Za-z0-9_]*\s+%}')
+    extract_iter_variable = regex.compile('[A-Za-z_]+[A-Za-z0-9_]*(?=\s+IN)')
+    extract_iterable = regex.compile('(?<=IN\s+)[A-Za-z_]+[A-Za-z0-9_]*')
+
+    # pattern for matching endfor loop
+    extract_possible_endfor_loop_placeholders = r"(?P<endfor_loop_statement>{\s*%\s*ENDFOR\s*.*?\s*%\s*})"
+    extract_actual_endfor_loop_placeholders = re.compile('{%\s+ENDFOR\s+%}')
+
+
     def __init__(self):
         self.pattern_sequence = [
             Patterns.extract_possible_variables,
             Patterns.extract_possible_if_placeholders,
             Patterns.extract_possible_endif_placeholders,
             Patterns.extract_possible_elseif_placeholders,
-            Patterns.extract_possible_else_placeholders
+            Patterns.extract_possible_else_placeholders,
+            Patterns.extract_possible_for_loop_placeholders,
+            Patterns.extract_possible_endfor_loop_placeholders,
         ] 

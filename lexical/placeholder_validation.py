@@ -21,11 +21,11 @@ def all_placeholders_exist(context_data: Dict[str, Any], variable_names: List[st
     else:
         return (True, None)
 
-def variable_exists(context_data: Dict[str, Any], variable_name: str) -> Tuple[bool, Any]:
+def variable_exists(context_data: Dict[str, Any], context_data_temp: Dict[str, Any], variable_name: str) -> Tuple[bool, Any]:
     """
     Check if a single variable exists in the context data. Returns (True, None) if it exists, otherwise (False, variable_name).
     """
-    if variable_name in context_data:
+    if variable_name in context_data or variable_name in context_data_temp:
         return (True, None)
     else:
         return (False, variable_name) 
