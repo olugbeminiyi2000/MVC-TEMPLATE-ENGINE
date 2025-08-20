@@ -20,6 +20,8 @@ from lexical.placeholder_validation import all_placeholders_exist, variable_exis
 from lexical.condition_truthy_falsy import get_truthy_falsy_logic, get_truthy_falsy_no_logic
 from lexical.patterns import Patterns
 from lexical.exceptions import VariableError, ConditionError, StructureError, PlacementError, LoopError
+from lexical.iterable_utils import validate_iterables, create_iterable_linked_list
+from lexical.iterable_linkedlist import IterableLinkedList
 
 
 # EXTRACT details from files
@@ -192,9 +194,9 @@ else:
 # TODO: check for all variables either as placeholders, in conditions or loops
 current_component: int = 0
 parsed_components_len: int = len(parsed_components)
-rendered_output: Dict[str, Any] = {"A": True, "B": False, "C": True, "D": True, "E": True, "F": False, "G": False, "first_name": "Emmanuel", "last_name": "Obolo", "farms": [], "tomatoes": {}, "containers": (), "labels": set()}
+rendered_output: Dict[str, Any] = {"A": True, "B": False, "C": True, "D": True, "E": True, "F": False, "G": False, "first_name": "Emmanuel", "last_name": "Obolo", "farms": [[], [4, 5, 6], [7, 8, 9]], "tomatoes": {"tomato1": 1, "tomato2": 2, "tomato3": 3}, "containers": (10, 11, 12), "labels": {100, "biscuits", "Orange"}}
 rendered_iter_variables: Dict[str, Any] = {}
-rendered_iterables: Dict[str, Any] = {}
+rendered_iterables: Dict[str, List[IterableLinkedList]] = {}
 iterables_list: List[str] = []
 
 
@@ -235,7 +237,8 @@ while current_component <= parsed_components_len - 1:
             iterable_str = iterable_obj.group()
             
             if iterable_str in rendered_output:
-                iterables_list.append(iterable_str)
+                if iterable_str not in iterables_list:
+                    iterables_list.append(iterable_str)
             elif iterable_str in rendered_iter_variables:
                 pass
             else:
@@ -246,16 +249,20 @@ while current_component <= parsed_components_len - 1:
     else:
         current_component += 1
 
-print(rendered_output)
-print(iterables_list)
-print(rendered_iter_variables)
-print(rendered_iterables)
+# print(rendered_output)
+# print(iterables_list)
+# print(rendered_iter_variables)
+# print(rendered_iterables)
 
 
 # TODO: CREATE ITERABLES LINKEDLIST AND PUT VERY POWERFUL CHECKS
+validate_iterables(iterables_list, rendered_output, rendered_iterables)
+create_iterable_linked_list(iterables_list, rendered_output, rendered_iterables)
+print(rendered_iter_variables)
+print(rendered_iterables)
 
-print(end="\n\n")
-print(parsed_components)
+# print(end="\n\n")
+# print(parsed_components)
 
 indentation_rule = 4
 should_render: bool = True
@@ -265,6 +272,7 @@ rendered_output_list: List = []
 component_counter: int = 0
 if_block_depth: int = 0
 if_block_indent_level: Union[int, None] = None
+for_endfor_pair: Dict[int, List[int]] = {}
 
 while component_counter <= parsed_components_len - 1:
     """
@@ -273,7 +281,122 @@ while component_counter <= parsed_components_len - 1:
     then also we would be substituting variables and normal strings if they are
     allowed to be showed
     """
-    if condition_pattern_list[0].search(parsed_components[component_counter][0]):
+    if loop_pattern_list[0].search(parsed_components[component_counter][0]):
+        # TODO 1: check indentation level of this node
+        index = parsed_components[component_counter][1].span()[0]
+        line_number = template_content.count('\n', 0, index) + 1
+        column_number = index - template_content.rfind('\n', 0, index) - 1
+        # TODO 2: check if column number remainder is Zero
+        """
+        If zero: it means it is correctly placed.
+        if not zero: it means it is incorrectly placed throw an error,
+        using the component[1].group(), column_number, line_number, and identation
+        rule.
+        """
+        check_placement = column_number % indentation_rule
+        if check_placement != 0:
+            raise PlacementError("The IF BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(parsed_components[component_counter][1].group(), column_number + 1, line_number, indentation_rule))
+        else:
+            curr_indentation_level = column_number // indentation_rule
+
+        # If no identation errors, for an identation level store the component counter (for node index)
+        # leave a place holder for the enfor node index, and also the number of iterations for that for node
+        # but the values of the iteration and storing depends if it is the first iteration or consistent ones
+        if curr_indentation_level in for_endfor_pair:
+            for_endfor_pair[curr_indentation_level][-1] = for_endfor_pair.get(curr_indentation_level)[-1] + 1
+        else:
+            for_endfor_pair[curr_indentation_level] = [component_counter, None, 1]
+        
+        # now let us extract iter_variable and the iterable
+        iter_variable: str = loop_pattern_list[1].search(parsed_components[component_counter][0]).group()
+        iterable: str = loop_pattern_list[2].search(parsed_components[component_counter][0]).group()
+
+        if iterable in rendered_iterables:
+            # now check the current value of the iterable if it is None or a IterableLinkedList
+            next_iteration = rendered_iterables[iterable][-1]
+            # next_iteration is None
+            if not next_iteration:
+                # assign the endfor-index + 1 to the component_counter using this for indentation level to find it in for_endfor_pair
+                # and also delete that current identation level to free it up and prevent errors down the template
+                enfor_index: Union[int, None] = for_endfor_pair[curr_indentation_level][1]
+                if not enfor_index:
+                    should_render = False
+                    component_counter += 1
+                else:
+                    should_render = True
+                    component_counter = for_endfor_pair[curr_indentation_level][1] + 1
+
+                del for_endfor_pair[curr_indentation_level]
+                # set the traversal head node to the stagnant head node for reset
+                rendered_iterables[iterable][-1] = rendered_iterables[iterable][0]
+            else:
+                current_iteration_data = rendered_iterables[iterable][-1].data
+                # store current_iteration data which is basically the value of our iter_variable, inside render_iter_variables
+                rendered_iter_variables[iter_variable] = current_iteration_data
+                # change the traversal head node to the next node or None
+                rendered_iterables[iterable][-1] = rendered_iterables[iterable][-1].next
+                component_counter += 1
+            
+            if iter_variable in rendered_iterables:
+                del rendered_iterables[iter_variable]
+
+        else:
+            if iterable in rendered_iter_variables:
+                # CREATE ITERABLES LINKEDLIST AND PUT VERY POWERFUL CHECKS
+                validate_iterables(iterable, rendered_iter_variables, rendered_iterables)
+                create_iterable_linked_list(iterable, rendered_iter_variables, rendered_iterables)
+                # now check the current value of the iterable if it is None or a IterableLinkedList
+                next_iteration = rendered_iterables[iterable][-1]
+                # next_iteration is None
+                if not next_iteration:
+                    # assign the endfor-index + 1 to the component_counter using this for indentation level to find it in for_endfor_pair
+                    # and also delete that current identation level to free it up and prevent errors down the template
+                    enfor_index: Union[int, None] = for_endfor_pair[curr_indentation_level][1]
+                    if not enfor_index:
+                        should_render = False
+                        component_counter += 1
+                    else:
+                        should_render = True
+                        component_counter = for_endfor_pair[curr_indentation_level][1] + 1                     
+                        del for_endfor_pair[curr_indentation_level]
+                        # set the traversal head node to the stagnant head node for reset
+                        rendered_iterables[iterable][-1] = rendered_iterables[iterable][0]
+                else:
+                    current_iteration_data = rendered_iterables[iterable][-1].data
+                    # store current_iteration data which is basically the value of our iter_variable, inside render_iter_variables
+                    rendered_iter_variables[iter_variable] = current_iteration_data
+                    # change the traversal head node to the next node or None
+                    rendered_iterables[iterable][-1] = rendered_iterables[iterable][-1].next
+                    component_counter += 1
+            else:
+                raise VariableError("Iterable {} is not found in either rerendered_iterables or rendered_iter_variables.".format(iterable))
+
+    elif loop_pattern_list[3].search(parsed_components[component_counter][0]):
+        # TODO 1: check indentation level of this node
+        index = parsed_components[component_counter][1].span()[0]
+        line_number = template_content.count('\n', 0, index) + 1
+        column_number = index - template_content.rfind('\n', 0, index) - 1
+        # TODO 2: check if column number remainder is Zero
+        """
+        If zero: it means it is correctly placed.
+        if not zero: it means it is incorrectly placed throw an error,
+        using the component[1].group(), column_number, line_number, and identation
+        rule.
+        """
+        check_placement = column_number % indentation_rule
+        if check_placement != 0:
+            raise PlacementError("The IF BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(parsed_components[component_counter][1].group(), column_number + 1, line_number, indentation_rule))
+        else:
+            curr_indentation_level = column_number // indentation_rule
+
+        # save the index of the endfor i.e the component_counter in the for_endfor pair of that current indentation level
+        # i.e as the second element of the list value of the for_endfor pair of that current indentation level
+        for_endfor_pair[curr_indentation_level][1] = component_counter
+        component_counter = for_endfor_pair[curr_indentation_level][0]
+
+
+
+    elif condition_pattern_list[0].search(parsed_components[component_counter][0]):
         component_list = patterns.extract_if_var_and_condition.findall(parsed_components[component_counter][0])
         # return logic_node of type logicNode or None
         logic_node = get_logic_chain(component_list)
@@ -443,7 +566,7 @@ while component_counter <= parsed_components_len - 1:
                         should_render = True
                         previous_indent_level = curr_indentation_level
                     else:
-                        # assigning show and prev_indentation_level7
+                        # assigning show and prev_indentation_level
                         should_render = False
                         previous_indent_level = curr_indentation_level
         else:
@@ -668,7 +791,10 @@ while component_counter <= parsed_components_len - 1:
         matched_var_obj: Match[str] = variable_pattern_list[0].search(parsed_components[component_counter][0])
         cleaned_up_var_obj: Match[str] = variable_pattern_list[1].search(matched_var_obj.group())
         if should_render:
-            rendered_output_list.append(rendered_output[cleaned_up_var_obj.group()])
+            try:
+                rendered_output_list.append(rendered_output[cleaned_up_var_obj.group()])
+            except KeyError:
+                rendered_output_list.append(rendered_iter_variables[cleaned_up_var_obj.group()])
         component_counter += 1
 
     else:
@@ -679,6 +805,4 @@ while component_counter <= parsed_components_len - 1:
                 rendered_output_list.append(parsed_components[component_counter][0])
         component_counter += 1
 
-print(should_render, previous_indent_level, if_block_depth, if_block_indent_level, indent_level_eval_map)
-print("\n")
 print(rendered_output_list)

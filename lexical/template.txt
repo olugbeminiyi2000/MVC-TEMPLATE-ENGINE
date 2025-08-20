@@ -1,41 +1,23 @@
 {% IF A %}
-    A is active.
-    {% IF NOT B %}
-        B is false, reacting accordingly.
-    {% ELSE %}
-        B is true, taking alternate path.
-    {% ENDIF %}
-{% ELIF C %}
-    C is triggered.
-    {% IF D AND E %}
-        D and E are both true.
-        {% IF F OR G %}
-            F or G is true.
-        {% ELSE %}
-            Neither F nor G passed.
+    Hello, {{ first_name }} {{ last_name }}!
+    {% FOR farm IN farms %}
+        {% IF C %}
+            Farm: {{ farm }}
+            {% FOR tomato IN farm %}
+                Tomato: {{ tomato }}
+            {% ENDFOR %}
         {% ENDIF %}
-    {% ELSE %}
-        Either D or E failed.
-    {% ENDIF %}
-{% ELSE %}
-    No primary condition met.
-{% ENDIF %}
-
-{% IF A AND NOT E %}
-    Branching: A true, E false
-    {% IF C AND D %}
-        Compound condition C and D successful.
-    {% ELIF F %}
-        ELIF block picked up: F is true.
-    {% ELSE %}
-        None of the secondary checks passed.
-    {% ENDIF %}
+    {% ENDFOR %}
 {% ENDIF %}
 
 {% IF B %}
-    B is true—simple conditional.
-{% ELIF NOT C %}
-    C is false—alt path.
+    This should not show.
 {% ELSE %}
-    Default path for final block.
+    {% FOR label IN labels %}
+        Label: {{ label }}
+    {% ENDFOR %}
 {% ENDIF %}
+
+{% FOR container IN containers %}
+    Container: {{ container }}
+{% ENDFOR %}

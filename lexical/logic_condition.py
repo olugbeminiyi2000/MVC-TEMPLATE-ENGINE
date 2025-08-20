@@ -5,7 +5,7 @@ This file is responsible for building a logic chain (linked list) from a list of
 """
 
 from __future__ import annotations
-from typing import Optional, Dict, Any, Union, List
+from typing import Dict, Union, List
 from lexical.logic_nodes import logicNode, notNode, andNode, orNode 
 
 

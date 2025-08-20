@@ -1,0 +1,6 @@
+loop_pattern_list: List[Pattern] = [patterns.extract_actual_for_loop_placeholders, patterns.extract_iter_variable, patterns.extract_iterable, patterns.extract_actual_endfor_loop_placeholders]
+
+print(rendered_output)
+print(iterables_list)
+print(rendered_iter_variables)
+print(rendered_iterables)
