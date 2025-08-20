@@ -213,24 +213,7 @@ while current_component <= parsed_components_len - 1:
     loop_pattern_list: List[Pattern] = [patterns.extract_actual_for_loop_placeholders, patterns.extract_iter_variable, patterns.extract_iterable, patterns.extract_actual_endfor_loop_placeholders]
 
     try:
-        if condition_pattern_list[0].search(parsed_components[current_component][0]):
-            component_list: List[str] = patterns.extract_if_var_and_condition.findall(parsed_components[current_component][0])
-            exist, result = all_placeholders_exist(rendered_output, component_list)
-            if not exist:
-                raise VariableError("Variable {} is not found checked rendered data argument to verify".format(result))
-        elif condition_pattern_list[1].search(parsed_components[current_component][0]):
-            component_list: List[str] = patterns.extract_elseif_var_and_condition.findall(parsed_components[current_component][0])
-            exist, result = all_placeholders_exist(rendered_output, component_list)
-            if not exist:
-                raise VariableError("Variable {} is not found checked rendered data argument to verify".format(result))
-        elif variable_pattern_list[0].search(parsed_components[current_component][0]):
-            matched_var_obj: Match[str] = variable_pattern_list[0].search(parsed_components[current_component][0])
-            cleaned_up_var_obj: Match[str] = variable_pattern_list[1].search(matched_var_obj.group())
-            var_string: str = cleaned_up_var_obj.group()
-            exist, result = variable_exists(rendered_output, rendered_iter_variables, var_string)
-            if not exist:
-                raise VariableError("Variable {} is not found checked rendered data argument to verify".format(result))
-        elif loop_pattern_list[0].search(parsed_components[current_component][0]):
+        if loop_pattern_list[0].search(parsed_components[current_component][0]):
             iter_variable_obj: Match[str] = loop_pattern_list[1].search(parsed_components[current_component][0])
             iterable_obj: Match[str] = loop_pattern_list[2].search(parsed_components[current_component][0])
             iter_variable_str = iter_variable_obj.group()
@@ -244,6 +227,23 @@ while current_component <= parsed_components_len - 1:
             else:
                 raise VariableError("Variable {} is not found checked rendered data argument to verify".format(iterable_str))
             rendered_iter_variables[iter_variable_str] = None
+        if condition_pattern_list[0].search(parsed_components[current_component][0]):
+            component_list: List[str] = patterns.extract_if_var_and_condition.findall(parsed_components[current_component][0])
+            exist, result = all_placeholders_exist(rendered_output, component_list, rendered_iter_variables)
+            if not exist:
+                raise VariableError("Variable {} is not found checked rendered data argument to verify".format(result))
+        elif condition_pattern_list[1].search(parsed_components[current_component][0]):
+            component_list: List[str] = patterns.extract_elseif_var_and_condition.findall(parsed_components[current_component][0])
+            exist, result = all_placeholders_exist(rendered_output, component_list, rendered_iter_variables)
+            if not exist:
+                raise VariableError("Variable {} is not found checked rendered data argument to verify".format(result))
+        elif variable_pattern_list[0].search(parsed_components[current_component][0]):
+            matched_var_obj: Match[str] = variable_pattern_list[0].search(parsed_components[current_component][0])
+            cleaned_up_var_obj: Match[str] = variable_pattern_list[1].search(matched_var_obj.group())
+            var_string: str = cleaned_up_var_obj.group()
+            exist, result = variable_exists(rendered_output, rendered_iter_variables, var_string)
+            if not exist:
+                raise VariableError("Variable {} is not found checked rendered data argument to verify".format(result))
     except VariableError:
         raise
     else:
@@ -401,9 +401,9 @@ while component_counter <= parsed_components_len - 1:
         # return logic_node of type logicNode or None
         logic_node = get_logic_chain(component_list)
         if logic_node:
-            boolean: bool = get_truthy_falsy_logic(logic_node, component_list, rendered_output)
+            boolean: bool = get_truthy_falsy_logic(logic_node, component_list, rendered_output, rendered_iter_variables)
         else:
-            boolean: bool = get_truthy_falsy_no_logic(component_list, rendered_output)
+            boolean: bool = get_truthy_falsy_no_logic(component_list, rendered_output, rendered_iter_variables)
         # NOTE always reset and clean up the (NOT, AND, OR, LOGIC) linkedlist(head, current) to None
         notNode.reset_not_head()
         andNode.reset_and_head()
@@ -434,8 +434,6 @@ while component_counter <= parsed_components_len - 1:
             if_block_depth += 1
             if_block_indent_level = curr_indentation_level
 
-        # TODO 3: check previous show for true or false
-        print(should_render, curr_indentation_level, parsed_components[component_counter][0], previous_indent_level)
         if not should_render:
             # TODO 4: compare current identation level to the prev_identation_level
             """
@@ -505,9 +503,9 @@ while component_counter <= parsed_components_len - 1:
         # return logic_node of type logicNode or None
         logic_node = get_logic_chain(component_list)
         if logic_node:
-            boolean: bool = get_truthy_falsy_logic(logic_node, component_list, rendered_output)
+            boolean: bool = get_truthy_falsy_logic(logic_node, component_list, rendered_output, rendered_iter_variables)
         else:
-            boolean: bool = get_truthy_falsy_no_logic(component_list, rendered_output)
+            boolean: bool = get_truthy_falsy_no_logic(component_list, rendered_output, rendered_iter_variables)
         # NOTE always reset and clean up the (NOT, AND, OR, LOGIC) linkedlist(head, current) to None
         notNode.reset_not_head()
         andNode.reset_and_head()
@@ -531,8 +529,6 @@ while component_counter <= parsed_components_len - 1:
         else:
             curr_indentation_level = column_number // indentation_rule
 
-        # TODO 3: check previous show for true or false
-        print(should_render, curr_indentation_level, parsed_components[component_counter][0], previous_indent_level)
         if not should_render:
             # TODO 4: compare current identation level to the prev_identation_level
             """
@@ -766,8 +762,7 @@ while component_counter <= parsed_components_len - 1:
                     should_render = False
                     previous_indent_level = curr_indentation_level
 
-        # TODO 7 delete the
-        print(component_counter)
+        # TODO 7 delete the identation level
         try:
             del indent_level_eval_map[curr_indentation_level]
         except KeyError:

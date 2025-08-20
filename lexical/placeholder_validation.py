@@ -6,7 +6,7 @@ This file contains helper functions for checking if variables/placeholders exist
 
 from typing import List, Tuple, Dict, Any
 
-def all_placeholders_exist(context_data: Dict[str, Any], variable_names: List[str]) -> Tuple[bool, Any]:
+def all_placeholders_exist(context_data: Dict[str, Any], variable_names: List[str], rendered_iter_variables: Dict[str, Any]) -> Tuple[bool, Any]:
     """
     Check if all variable names in the list exist in the context data.
     Skips logic operators (NOT, AND, OR). Returns (True, None) if all exist, otherwise (False, missing_variable).
@@ -16,7 +16,13 @@ def all_placeholders_exist(context_data: Dict[str, Any], variable_names: List[st
             continue
         try:
             _ = context_data[variable_name]
-        except KeyError as e:
+        except KeyError:
+            pass
+        else:
+            continue
+        try:
+            _ = rendered_iter_variables[variable_name]
+        except KeyError:
             return (False, variable_name)
     else:
         return (True, None)

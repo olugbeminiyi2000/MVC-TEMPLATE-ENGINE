@@ -1,23 +1,16 @@
-{% IF A %}
+{% IF E %}
     Hello, {{ first_name }} {{ last_name }}!
-    {% FOR farm IN farms %}
-        {% IF C %}
-            Farm: {{ farm }}
-            {% FOR tomato IN farm %}
-                Tomato: {{ tomato }}
-            {% ENDFOR %}
+    {% FOR label IN labels %}
+        {% IF label %}
+            Label: {{ label }}
         {% ENDIF %}
     {% ENDFOR %}
 {% ENDIF %}
 
-{% IF B %}
+{% IF G %}
     This should not show.
 {% ELSE %}
-    {% FOR label IN labels %}
-        Label: {{ label }}
+    {% FOR tomato IN tomatoes %}
+        Tomato: {{ tomato }}
     {% ENDFOR %}
 {% ENDIF %}
-
-{% FOR container IN containers %}
-    Container: {{ container }}
-{% ENDFOR %}
