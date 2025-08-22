@@ -4,7 +4,7 @@ Logic Expression Evaluator for Template Engine
 This file evaluates the truthiness or falsiness of logic expressions represented by logic node chains.
 """
 
-from lexical.logic_condition import logicNode
+from engine_core.logic_condition import logicNode
 from typing import Dict, Union, Any, List
 
 class RangeDict(Dict):

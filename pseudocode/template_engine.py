@@ -14,14 +14,14 @@ Key steps:
 import os
 import re
 from typing import List, Match, Pattern, Tuple, Dict, Any, Union
-from lexical.logic_nodes import logicNode, orNode, andNode, notNode
-from lexical.logic_condition import get_logic_chain
-from lexical.placeholder_validation import all_placeholders_exist, variable_exists
-from lexical.condition_truthy_falsy import get_truthy_falsy_logic, get_truthy_falsy_no_logic
-from lexical.patterns import Patterns
-from lexical.exceptions import VariableError, ConditionError, StructureError, PlacementError, LoopError
-from lexical.iterable_utils import validate_iterables, create_iterable_linked_list
-from lexical.iterable_linkedlist import IterableLinkedList
+from engine_core.logic_nodes import logicNode, orNode, andNode, notNode
+from engine_core.logic_condition import get_logic_chain
+from engine_core.placeholder_validation import all_placeholders_exist, variable_exists
+from engine_core.condition_truthy_falsy import get_truthy_falsy_logic, get_truthy_falsy_no_logic
+from engine_core.patterns import Patterns
+from engine_core.exceptions import VariableError, ConditionError, StructureError, PlacementError, LoopError
+from engine_core.iterable_utils import validate_iterables, create_iterable_linked_list
+from engine_core.iterable_linkedlist import IterableLinkedList
 
 
 # EXTRACT details from files

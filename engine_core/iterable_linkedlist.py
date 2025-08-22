@@ -40,4 +40,3 @@ class IterableLinkedList:
             chain_repr += f"node{{{node_data}, {next_node_repr}}} -> "
             node_cursor = getattr(node_cursor, "next", None)
         chain_repr += "None"
-        print(chain_repr)

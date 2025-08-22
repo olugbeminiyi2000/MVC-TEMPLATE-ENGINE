@@ -1,0 +1,42 @@
+User Profile: {{first_name}} {{last_name}}
+
+{% IF E %}
+    Inventory Check:
+    {% FOR container IN containers %}
+        Container ID: {{container}}
+        {% IF D %}
+            {% FOR farm IN farms %}
+                {% IF farm %}
+                    Farm Contents:
+                    {% FOR num IN farm %}
+                        Item {{num}}
+                    {% ENDFOR %}
+                {% ELIF C %}
+                    Farm is empty but C is true.
+                {% ELSE %}
+                    No farm data.
+                {% ENDIF %}
+            {% ENDFOR %}
+        {% ELSE %}
+            No farms checked.
+        {% ENDIF %}
+    {% ENDFOR %}
+{% ELSE %}
+    Inventory not available.
+{% ENDIF %}
+
+Label Report:
+{% IF F %}
+    No labels to display.
+{% ELSE %}
+    {% FOR label IN labels %}
+        Label Entry: {{label}}
+        {% IF A %}
+            {% FOR container IN containers %}
+                Container {{container}} linked to {{label}}
+            {% ENDFOR %}
+        {% ELIF C %}
+            Containers not linked.
+        {% ENDIF %}
+    {% ENDFOR %}
+{% ENDIF %}
