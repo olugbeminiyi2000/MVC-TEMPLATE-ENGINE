@@ -58,7 +58,7 @@ def render_output(**kwargs) -> List[Any]:
             """
             check_placement = column_number % indentation_rule
             if check_placement != 0:
-                raise PlacementError("The IF BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(parsed_components[component_counter][1].group(), column_number + 1, line_number, indentation_rule))
+                raise PlacementError("The FOR BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(parsed_components[component_counter][1].group(), column_number + 1, line_number, indentation_rule))
             else:
                 curr_indentation_level = column_number // indentation_rule
 
@@ -74,7 +74,7 @@ def render_output(**kwargs) -> List[Any]:
             iter_variable: str = loop_pattern_list[1].search(parsed_components[component_counter][0]).group()
             iterable: str = loop_pattern_list[2].search(parsed_components[component_counter][0]).group()
             
-            # save state before commencing in this loop
+            # save should render state before commencing in this loop
             state_before_loop_dict[curr_indentation_level] = (should_render, curr_indentation_level)
 
             if iterable in rendered_iterables:
@@ -151,7 +151,7 @@ def render_output(**kwargs) -> List[Any]:
             """
             check_placement = column_number % indentation_rule
             if check_placement != 0:
-                raise PlacementError("The IF BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(parsed_components[component_counter][1].group(), column_number + 1, line_number, indentation_rule))
+                raise PlacementError("The ENDFOR BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(parsed_components[component_counter][1].group(), column_number + 1, line_number, indentation_rule))
             else:
                 curr_indentation_level = column_number // indentation_rule
 
@@ -294,7 +294,7 @@ def render_output(**kwargs) -> List[Any]:
             """
             check_placement = column_number % indentation_rule
             if check_placement != 0:
-                raise PlacementError("The IF BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(parsed_components[component_counter][1].group(), column_number, line_number, indentation_rule))
+                raise PlacementError("The ELIF BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(parsed_components[component_counter][1].group(), column_number, line_number, indentation_rule))
             else:
                 curr_indentation_level = column_number // indentation_rule
 
@@ -379,7 +379,7 @@ def render_output(**kwargs) -> List[Any]:
             """
             check_placement = column_number % indentation_rule
             if check_placement != 0:
-                raise PlacementError("The IF BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(parsed_components[component_counter][1].group(), column_number, line_number, indentation_rule))
+                raise PlacementError("The ELSE BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(parsed_components[component_counter][1].group(), column_number, line_number, indentation_rule))
             else:
                 curr_indentation_level = column_number // indentation_rule
 
@@ -464,7 +464,7 @@ def render_output(**kwargs) -> List[Any]:
             """
             check_placement = column_number % indentation_rule
             if check_placement != 0:
-                raise PlacementError("The IF BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(parsed_components[component_counter][1].group(), column_number, line_number, indentation_rule))
+                raise PlacementError("The ENDIF BlockNode {} is not correctly placed at column {}, line {}. It should be a multiple of {}".format(parsed_components[component_counter][1].group(), column_number, line_number, indentation_rule))
             else:
                 curr_indentation_level = column_number // indentation_rule
 
