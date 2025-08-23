@@ -47,7 +47,7 @@ def check_loop_structure(loop_blocks: List[Tuple[str, Match[str]]]) -> None:
             if loop_start == 0:
                 initial_loop_tuple = loop_blocks[loop_position]
                 if initial_loop_tuple[0] != "for_loop_statement":
-                    raise StructureError("Block should start with {{% FOR STATEMENT %}} not {}".format(initial_loop_tuple[1].group()))
+                    raise StructureError("Block should start with \x1b[1m\x1b[35m{{% FOR STATEMENT %}}\x1b[0m not \x1b[35m{}\x1b[0m".format(initial_loop_tuple[1].group()))
                 
             current_loop_tuple = loop_blocks[loop_position]
             if current_loop_tuple[0] == "for_loop_statement":

@@ -38,25 +38,25 @@ def validate_placeholders(parsed_components: List[Tuple[str, Union[Match[str], N
                 elif iterable_str in rendered_iter_variables:
                     pass
                 else:
-                    raise VariableError("Variable {} is not found checked rendered data argument to verify".format(iterable_str))
+                    raise VariableError("\x1b[1m\x1b[31mVariable\x1b[0m \x1b[35m{}\x1b[0m \x1b[31mis not found checked rendered data argument to verify\x1b[0m".format(iterable_str))
                 rendered_iter_variables[iter_variable_str] = None
             if condition_pattern_list[0].search(parsed_components[current_component][0]):
                 component_list: List[str] = patterns.extract_if_var_and_condition.findall(parsed_components[current_component][0])
                 exist, result = all_placeholders_exist(context_data, component_list, rendered_iter_variables)
                 if not exist:
-                    raise VariableError("Variable {} is not found checked rendered data argument to verify".format(result))
+                    raise VariableError("\x1b[1m\x1b[31mVariable\x1b[0m \x1b[35m{}\x1b[0m \x1b[31mis not found checked rendered data argument to verify\x1b[0m".format(result))
             elif condition_pattern_list[1].search(parsed_components[current_component][0]):
                 component_list: List[str] = patterns.extract_elseif_var_and_condition.findall(parsed_components[current_component][0])
                 exist, result = all_placeholders_exist(context_data, component_list, rendered_iter_variables)
                 if not exist:
-                    raise VariableError("Variable {} is not found checked rendered data argument to verify".format(result))
+                    raise VariableError("\x1b[1m\x1b[31mVariable\x1b[0m \x1b[35m{}\x1b[0m \x1b[31mis not found checked rendered data argument to verify\x1b[0m".format(result))
             elif variable_pattern_list[0].search(parsed_components[current_component][0]):
                 matched_var_obj: Match[str] = variable_pattern_list[0].search(parsed_components[current_component][0])
                 cleaned_up_var_obj: Match[str] = variable_pattern_list[1].search(matched_var_obj.group())
                 var_string: str = cleaned_up_var_obj.group()
                 exist, result = variable_exists(context_data, rendered_iter_variables, var_string)
                 if not exist:
-                    raise VariableError("Variable {} is not found checked rendered data argument to verify".format(result))
+                    raise VariableError("\x1b[1m\x1b[31mVariable\x1b[0m \x1b[35m{}\x1b[0m \x1b[31mis not found checked rendered data argument to verify\x1b[0m".format(result))
         except VariableError:
             raise
         else:
