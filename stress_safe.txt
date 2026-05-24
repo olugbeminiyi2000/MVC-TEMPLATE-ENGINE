@@ -1,0 +1,103 @@
+=== TEST 1: Variable Substitution ===
+Hello, {{ username }}!
+
+=== TEST 2: IF-ELIF-ELSE Chain (multiple branches) ===
+{% IF B %}
+    B is true — WRONG
+{% ELIF D %}
+    D is true — WRONG
+{% ELIF C %}
+    C is true — CORRECT
+{% ELSE %}
+    Fallback — WRONG
+{% ENDIF %}
+
+=== TEST 3: NOT + AND complex logic ===
+{% IF NOT B AND A %}
+    (NOT B) AND A is true — CORRECT
+{% ELSE %}
+    WRONG
+{% ENDIF %}
+
+=== TEST 4: OR short-circuit ===
+{% IF B OR C %}
+    B OR C is true — CORRECT
+{% ELSE %}
+    WRONG
+{% ENDIF %}
+
+=== TEST 5: NOT with truthy var ===
+{% IF NOT A %}
+    NOT A — WRONG
+{% ELSE %}
+    NOT A is false, else runs — CORRECT
+{% ENDIF %}
+
+=== TEST 6: Sequential FOR loops (same variable name) ===
+First pass:
+{% FOR score IN scores %}
+    score: {{ score }}
+{% ENDFOR %}
+Second pass:
+{% FOR score IN scores %}
+    score again: {{ score }}
+{% ENDFOR %}
+
+=== TEST 7: FOR then IF at same indentation level ===
+{% FOR score IN scores %}
+    item: {{ score }}
+{% ENDFOR %}
+{% IF A %}
+    IF after loop fires — CORRECT
+{% ENDIF %}
+
+=== TEST 8: Condition on loop variable (falsy item) ===
+{% FOR score IN scores %}
+    {% IF score %}
+        nonzero: {{ score }}
+    {% ELSE %}
+        zero found
+    {% ENDIF %}
+{% ENDFOR %}
+
+=== TEST 9: Nested loop with non-empty inner list ===
+{% FOR group IN nested %}
+    {% IF group %}
+        {% FOR num IN group %}
+            num: {{ num }}
+        {% ENDFOR %}
+    {% ELSE %}
+        empty group
+    {% ENDIF %}
+{% ENDFOR %}
+
+=== TEST 10: String iterable ===
+{% FOR ch IN phrase %}
+    char: {{ ch }}
+{% ENDFOR %}
+
+=== TEST 11: Deeply nested condition chains ===
+{% IF A %}
+    {% IF C %}
+        {% IF NOT B %}
+            A and C and NOT B — CORRECT
+        {% ELSE %}
+            WRONG
+        {% ENDIF %}
+    {% ELIF B %}
+        WRONG
+    {% ELSE %}
+        WRONG
+    {% ENDIF %}
+{% ELSE %}
+    WRONG
+{% ENDIF %}
+
+=== TEST 12: ELIF after false ELIF ===
+{% IF B %}
+    WRONG
+{% ELIF D %}
+    WRONG
+{% ELIF A %}
+    A true after two false ELIFs — CORRECT
+{% ENDIF %}

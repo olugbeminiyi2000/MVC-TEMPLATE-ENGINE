@@ -90,10 +90,9 @@ def render_output(**kwargs) -> List[Any]:
                     else:
                         component_counter = for_endfor_pair[curr_indentation_level][1] + 1
                         del state_before_loop_dict[curr_indentation_level]
-
-                    del for_endfor_pair[curr_indentation_level]
-                    # set the traversal head node to the stagnant head node for reset
-                    rendered_iterables[iterable][-1] = rendered_iterables[iterable][0]
+                        del for_endfor_pair[curr_indentation_level]
+                        # set the traversal head node to the stagnant head node for reset
+                        rendered_iterables[iterable][-1] = rendered_iterables[iterable][0]
                 else:
                     current_iteration_data = rendered_iterables[iterable][-1].data
                     # store current_iteration data which is basically the value of our iter_variable, inside render_iter_variables
@@ -558,9 +557,10 @@ def render_output(**kwargs) -> List[Any]:
             cleaned_up_var_obj: Match[str] = variable_pattern_list[1].search(matched_var_obj.group())
             if should_render:
                 try:
-                    rendered_output_list += str(context_data[cleaned_up_var_obj.group()])
+                    value = context_data[cleaned_up_var_obj.group()]
                 except KeyError:
-                    rendered_output_list += str(rendered_iter_variables[cleaned_up_var_obj.group()])
+                    value = rendered_iter_variables[cleaned_up_var_obj.group()]
+                rendered_output_list += "" if value is None else str(value)
             component_counter += 1
 
         else:

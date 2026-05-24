@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>V1 Template Engine Docs</title>
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23f59e0b'/><text x='50%25' y='52%25' dominant-baseline='middle' text-anchor='middle' fill='%23000000' font-size='13' font-weight='800' font-family='Arial,sans-serif'>TE</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ─── Theme tokens ─────────────────────────────────────────── */
+    /* Light  = Python yellow identity                               */
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --surface: #ffffff;
+      --surface-alt: #fef9ee;
+      --border: #fde68a;
+      --text: #111111;
+      --text-muted: #6b7280;
+      --accent: #f59e0b;
+      --accent-text: #000000;
+      --accent-dim: #fef3c7;
+      --tag-bg: #fef3c7;
+      --tag-text: #92400e;
+      --code-bg: #fef9ee;
+      --code-text: #c7254e;
+      --pre-bg: #111111;
+      --pre-text: #ffffff;
+      --kw: #89b4fa;
+      --str: #a6e3a1;
+      --var: #f38ba8;
+      --op: #fab387;
+      --num: #f9e2af;
+      --badge-bg: #fef3c7;
+      --badge-text: #92400e;
+      --scrollbar: #fde68a;
+    }
+
+    /* Dark   = black base, Django green as accent                   */
+    [data-theme="dark"] {
+      --bg: #06080a;
+      --surface: #0d1210;
+      --surface-alt: #111816;
+      --border: #1c2820;
+      --text: #ffffff;
+      --text-muted: #afb7b3;
+      --accent: #44B78B;
+      --accent-text: #06080a;
+      --accent-dim: #0d1e16;
+      --tag-bg: #0d1e16;
+      --tag-text: #93D7B7;
+      --code-bg: #090e0c;
+      --code-text: #93D7B7;
+      --pre-bg: #04060a;
+      --pre-text: #ffffff;
+      --kw: #44B78B;
+      --str: #93D7B7;
+      --var: #ffffff;
+      --op: #afb7b3;
+      --num: #93D7B7;
+      --badge-bg: #0d1e16;
+      --badge-text: #93D7B7;
+      --scrollbar: #1c2820;
+    }
+
+    /* ─── Reset & base ─────────────────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      overscroll-behavior: none;
+    }
+
+    body {
+      font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      overscroll-behavior: none;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .github-link {
+      display: flex;
+      align-items: center;
+      color: var(--text-muted);
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    .github-link:hover {
+      color: var(--accent);
+      transform: scale(1.12);
+      text-decoration: none;
+    }
+
+    .github-link svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--scrollbar);
+      border-radius: 3px;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* ─── Navbar ────────────────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    nav.scrolled {
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    .nav-logo {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      letter-spacing: -0.01em;
+    }
+
+    .nav-logo .bracket {
+      background: var(--accent);
+      color: var(--accent-text);
+      padding: 0.18rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      letter-spacing: 0.01em;
+      transition: color 0.2s ease;
+      position: relative;
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.25s ease;
+      border-radius: 2px;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .nav-links a:hover::after {
+      transform: scaleX(1);
+    }
+
+    .theme-bar {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .theme-btn {
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      font-family: "Poppins", sans-serif;
+      transition: background 0.22s ease, color 0.22s ease, border-color 0.22s ease, transform 0.15s ease;
+    }
+
+    .theme-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .theme-btn:active {
+      transform: translateY(0);
+    }
+
+    .theme-btn.active {
+      background: var(--accent);
+      color: var(--accent-text);
+      border-color: var(--accent);
+    }
+
+    /* ─── Layout ────────────────────────────────────────────────── */
+    .wrapper {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      max-width: 1160px;
+      margin: 0 auto;
+      gap: 0;
+      padding: 2.5rem 1.5rem;
+    }
+
+    @media (max-width: 780px) {
+      .wrapper {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      nav .nav-links {
+        display: none;
+      }
+    }
+
+    /* ─── Sidebar ───────────────────────────────────────────────── */
+    .sidebar {
+      position: sticky;
+      top: 80px;
+      align-self: start;
+      font-size: 0.82rem;
+      padding-right: 1.75rem;
+      border-right: 1px solid var(--border);
+      transition: border-color 0.3s ease;
+    }
+
+    .sidebar-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .sidebar-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+      padding-left: 0.75rem;
+    }
+
+    .sidebar ul {
+      list-style: none;
+    }
+
+    .sidebar li a {
+      display: block;
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      color: var(--text-muted);
+      border-left: 2px solid transparent;
+      font-weight: 500;
+      transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .sidebar li a:hover {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: var(--accent-dim);
+      text-decoration: none;
+    }
+
+    .sidebar li a.active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: var(--accent-dim);
+      font-weight: 600;
+    }
+
+    .content {
+      padding-left: 2.5rem;
+    }
+
+    /* ─── Content ───────────────────────────────────────────────── */
+    .content>section {
+      margin-bottom: 4rem;
+      scroll-margin-top: 88px;
+      animation: fadeUp 0.45s ease both;
+    }
+
+    .content>.hero {
+      animation: fadeUp 0.4s ease both;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text);
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1.4rem;
+      letter-spacing: -0.01em;
+    }
+
+    h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.01em;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* ─── Hero ──────────────────────────────────────────────────── */
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 3rem 2.5rem;
+      margin-bottom: 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+      opacity: 0.08;
+      pointer-events: none;
+    }
+
+    .hero-sub {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-top: 0.6rem;
+      max-width: 560px;
+      line-height: 1.8;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .badge {
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      border-radius: 999px;
+      padding: 0.3rem 0.85rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .badge:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    /* ─── Cards ─────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem 1.6rem;
+      margin-bottom: 1rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1);
+      border-color: var(--accent);
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ─── Inline code ───────────────────────────────────────────── */
+    code {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-family: "Fira Code", "Cascadia Code", Consolas, monospace;
+      font-size: 0.875em;
+    }
+
+    /* ─── Code blocks ───────────────────────────────────────────── */
+    .code-block {
+      background: var(--pre-bg);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 1rem 0;
+      border: 1px solid var(--border);
+    }
+
+    .code-block-header {
+      background: color-mix(in srgb, var(--pre-bg) 80%, white 20%);
+      padding: 0.4rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .code-block pre {
+      padding: 1.1rem 1.25rem;
+      overflow-x: auto;
+      font-family: "Fira Code", "Cascadia Code", Consolas, monospace;
+      font-size: 0.875rem;
+      line-height: 1.65;
+      color: var(--pre-text);
+      white-space: pre;
+    }
+
+    /* syntax tokens */
+    .kw {
+      color: var(--kw);
+      font-weight: 600;
+    }
+
+    .str {
+      color: var(--str);
+    }
+
+    .var {
+      color: var(--var);
+    }
+
+    .op {
+      color: var(--op);
+    }
+
+    .num {
+      color: var(--num);
+    }
+
+    .cm {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .tg {
+      color: var(--accent);
+    }
+
+    /* template tag punctuation */
+    .tb {
+      color: var(--kw);
+      font-weight: 700;
+    }
+
+    /* template block keyword */
+    .tv {
+      color: var(--var);
+    }
+
+    /* template variable name */
+
+    /* ─── Tables ────────────────────────────────────────────────── */
+    .tbl-wrap {
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.6rem 1rem;
+      background: var(--surface-alt);
+      border-bottom: 2px solid var(--border);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+
+    td {
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: var(--surface-alt);
+    }
+
+    /* ─── Pipeline ──────────────────────────────────────────────── */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 1rem 0;
+    }
+
+    .pipe-step {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .pipe-connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .pipe-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--accent-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .pipe-line {
+      width: 2px;
+      flex: 1;
+      min-height: 20px;
+      background: var(--border);
+      margin: 2px 0;
+    }
+
+    .pipe-step:last-child .pipe-line {
+      display: none;
+    }
+
+    .pipe-body {
+      padding: 0.1rem 0 1.25rem;
+    }
+
+    .pipe-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .pipe-desc {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .pipe-module {
+      display: inline-block;
+      margin-top: 0.35rem;
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      padding: 0.15rem 0.55rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.78rem;
+    }
+
+    /* ─── Callout ───────────────────────────────────────────────── */
+    .callout {
+      border-left: 3px solid var(--accent);
+      background: var(--accent-dim);
+      padding: 0.9rem 1.2rem;
+      border-radius: 0 10px 10px 0;
+      font-size: 0.875rem;
+      margin: 1.25rem 0;
+      line-height: 1.7;
+    }
+
+    .callout strong {
+      color: var(--accent);
+    }
+
+    /* ─── Animations ────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .content>section:nth-child(1) {
+      animation-delay: 0.05s;
+    }
+
+    .content>section:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+
+    .content>section:nth-child(3) {
+      animation-delay: 0.15s;
+    }
+
+    .content>section:nth-child(4) {
+      animation-delay: 0.2s;
+    }
+
+    .content>section:nth-child(5) {
+      animation-delay: 0.25s;
+    }
+
+    .sidebar {
+      animation: fadeIn 0.5s ease both;
+    }
+
+    /* ─── Operator grid ─────────────────────────────────────────── */
+    .op-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    @media (max-width: 600px) {
+      .op-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .op-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1rem;
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .op-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+      border-color: var(--accent);
+    }
+
+    .op-keyword {
+      font-family: "Fira Code", monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--kw);
+      display: block;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.04em;
+    }
+
+    .op-card p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ─── Navbar ──────────────────────────────────────────────────── -->
+  <nav>
+    <div class="nav-logo">
+      <span class="bracket">V1TE</span> v1 Template Engine
+    </div>
+    <ul class="nav-links">
+      <li><a href="#quickstart">Quick Start</a></li>
+      <li><a href="#variables">Syntax</a></li>
+      <li><a href="#loops">Loops</a></li>
+      <li><a href="#pipeline">Pipeline</a></li>
+      <li><a href="#errors">Errors</a></li>
+    </ul>
+    <div class="theme-bar">
+      <a class="github-link" href="https://github.com/olugbeminiyi2000/MVC-TEMPLATE-ENGINE" target="_blank"
+        rel="noopener" aria-label="View on GitHub">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+        </svg>
+      </a>
+      <button class="theme-btn active" data-theme="light">Light</button>
+      <button class="theme-btn" data-theme="dark">Dark</button>
+    </div>
+  </nav>
+
+  <!-- ─── Main layout ─────────────────────────────────────────────── -->
+  <div class="wrapper">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-group">
+        <div class="sidebar-title">Getting Started</div>
+        <ul>
+          <li><a href="#intro">Introduction</a></li>
+          <li><a href="#quickstart">Quick Start</a></li>
+        </ul>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-title">Syntax</div>
+        <ul>
+          <li><a href="#variables">Variables</a></li>
+          <li><a href="#conditionals">Conditionals</a></li>
+          <li><a href="#logic">Logic Operators</a></li>
+          <li><a href="#loops">Loops</a></li>
+        </ul>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-title">Rules</div>
+        <ul>
+          <li><a href="#types">Iterable Types</a></li>
+          <li><a href="#indentation">Indentation</a></li>
+          <li><a href="#names">Variable Names</a></li>
+        </ul>
+      </div>
+      <div class="sidebar-group">
+        <div class="sidebar-title">Reference</div>
+        <ul>
+          <li><a href="#pipeline">Pipeline</a></li>
+          <li><a href="#errors">Error Reference</a></li>
+          <li><a href="#example">Full Example</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main class="content">
+
+      <!-- ── Hero ────────────────────────────────────────────────── -->
+      <div class="hero" id="intro">
+        <h1>v1 Template Engine</h1>
+        <p class="hero-sub">
+          A lightweight Python template engine built without an AST — using a linear
+          state machine, indentation-based scope tracking, and a custom linked-list
+          iterator for loops.
+        </p>
+        <div class="hero-badges">
+          <span class="badge">Python 3</span>
+          <span class="badge">1 dependency: regex</span>
+          <span class="badge">Variables</span>
+          <span class="badge">Conditionals</span>
+          <span class="badge">Loops</span>
+          <span class="badge">NOT · AND · OR</span>
+          <span class="badge">Nested structures</span>
+        </div>
+      </div>
+
+      <!-- ── Quick Start ─────────────────────────────────────────── -->
+      <section id="quickstart">
+        <h2>Quick Start</h2>
+
+        <p>Write your template in a <code>.txt</code> file:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span>template.txt</span></div>
+          <pre><span class="cm">Hello, </span><span class="tg">{{</span> <span class="tv">username</span> <span class="tg">}}</span><span class="cm">!</span>
+
+<span class="tg">{%</span> <span class="tb">IF</span> <span class="tv">show_items</span> <span class="tg">%}</span>
+    Your items:
+    <span class="tg">{%</span> <span class="tb">FOR</span> <span class="tv">item</span> <span class="tb">IN</span> <span class="tv">items</span> <span class="tg">%}</span>
+        - <span class="tg">{{</span> <span class="tv">item</span> <span class="tg">}}</span>
+    <span class="tg">{%</span> <span class="tb">ENDFOR</span> <span class="tg">%}</span>
+<span class="tg">{%</span> <span class="tb">ELSE</span> <span class="tg">%}</span>
+    No items to show.
+<span class="tg">{%</span> <span class="tb">ENDIF</span> <span class="tg">%}</span></pre>
+        </div>
+
+        <p>Pass a <code>context_data</code> dictionary to the engine:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span>Python</span></div>
+          <pre><span class="kw">from</span> engine.main_engine <span class="kw">import</span> run_template_engine
+
+context_data <span class="op">=</span> {
+    <span class="str">"username"</span>: <span class="str">"Emmanuel"</span>,
+    <span class="str">"show_items"</span>: <span class="kw">True</span>,
+    <span class="str">"items"</span>: [<span class="str">"Apples"</span>, <span class="str">"Oranges"</span>, <span class="str">"Mangoes"</span>],
+}
+
+run_template_engine(<span class="str">"template.txt"</span>, context_data)</pre>
+        </div>
+
+        <p>Run from the project root:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span>Terminal</span></div>
+          <pre>python -m engine.main_engine</pre>
+        </div>
+
+        <div class="callout">
+          <strong>Note:</strong> The template filename is resolved relative to the project root directory.
+          <code>run_template_engine</code> prints the rendered output directly.
+        </div>
+      </section>
+
+      <!-- ── Variables ───────────────────────────────────────────── -->
+      <section id="variables">
+        <h2>Variables</h2>
+
+        <p>
+          Use double curly braces to insert a value from <code>context_data</code>
+          or from the current loop scope.
+        </p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span>Syntax</span></div>
+          <pre><span class="tg">{{</span> <span class="tv">variable_name</span> <span class="tg">}}</span></pre>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <h3>Flexible whitespace</h3>
+            <p>All of these are valid and produce the same output.</p>
+            <div class="code-block">
+              <div class="code-block-header"><span>Template</span></div>
+              <pre><span class="tg">{{</span> <span class="tv">name</span> <span class="tg">}}</span>
+<span class="tg">{{</span><span class="tv">name</span><span class="tg">}}</span>
+<span class="tg">{{</span>  <span class="tv">name</span>  <span class="tg">}}</span></pre>
+            </div>
+          </div>
+          <div class="card">
+            <h3>None renders as empty</h3>
+            <p>If a variable's value is <code>None</code>, an empty string is output — no visible text.</p>
+            <div class="code-block">
+              <div class="code-block-header"><span>Python</span></div>
+              <pre>context_data <span class="op">=</span> { <span class="str">"title"</span>: <span class="kw">None</span> }
+<span class="cm"># {{ title }} → ""</span></pre>
+            </div>
+          </div>
+        </div>
+
+        <p>
+          Variable names must be valid Python identifiers — see
+          <a href="#names">Variable Names</a> for the rules.
+        </p>
+      </section>
+
+      <!-- ── Conditionals ─────────────────────────────────────────── -->
+      <section id="conditionals">
+        <h2>Conditionals</h2>
+
+        <div class="code-block">
+          <div class="code-block-header"><span>Syntax</span></div>
+          <pre><span class="tg">{%</span> <span class="tb">IF</span> <span class="tv">condition</span> <span class="tg">%}</span>
+    ...
+<span class="tg">{%</span> <span class="tb">ELIF</span> <span class="tv">other_condition</span> <span class="tg">%}</span>
+    ...
+<span class="tg">{%</span> <span class="tb">ELSE</span> <span class="tg">%}</span>
+    ...
+<span class="tg">{%</span> <span class="tb">ENDIF</span> <span class="tg">%}</span></pre>
+        </div>
+
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rule</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>{% ELIF %}</code> and <code>{% ELSE %}</code></td>
+                <td>Optional. Multiple <code>ELIF</code> branches are supported.</td>
+              </tr>
+              <tr>
+                <td>Branch exclusivity</td>
+                <td>Once one branch is true, all remaining <code>ELIF</code> and <code>ELSE</code> branches are skipped.
+                </td>
+              </tr>
+              <tr>
+                <td>Truthiness</td>
+                <td>Follows Python rules: <code>0</code>, <code>""</code>, <code>[]</code>, <code>{}</code>,
+                  <code>None</code>, <code>False</code> are all falsy.
+                </td>
+              </tr>
+              <tr>
+                <td>Keywords</td>
+                <td>Must be <strong>uppercase</strong>: <code>IF</code>, <code>ELIF</code>, <code>ELSE</code>,
+                  <code>ENDIF</code>.
+                </td>
+              </tr>
+              <tr>
+                <td>Nesting</td>
+                <td>Conditions can be nested inside loops and other conditions to any depth.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Multiple ELIF branches</h3>
+        <div class="code-block">
+          <div class="code-block-header"><span>Template</span></div>
+          <pre><span class="tg">{%</span> <span class="tb">IF</span> <span class="tv">is_admin</span> <span class="tg">%}</span>
+    Admin panel
+<span class="tg">{%</span> <span class="tb">ELIF</span> <span class="tv">is_moderator</span> <span class="tg">%}</span>
+    Moderator panel
+<span class="tg">{%</span> <span class="tb">ELIF</span> <span class="tv">is_member</span> <span class="tg">%}</span>
+    Member dashboard
+<span class="tg">{%</span> <span class="tb">ELSE</span> <span class="tg">%}</span>
+    Please log in.
+<span class="tg">{%</span> <span class="tb">ENDIF</span> <span class="tg">%}</span></pre>
+        </div>
+      </section>
+
+      <!-- ── Logic Operators ──────────────────────────────────────── -->
+      <section id="logic">
+        <h2>Logic Operators</h2>
+
+        <p>Three operators are available inside <code>{% IF %}</code> and <code>{% ELIF %}</code> conditions.</p>
+
+        <div class="op-grid">
+          <div class="op-card">
+            <span class="op-keyword">NOT</span>
+            <p>Negates the truthiness of the variable that immediately follows it.</p>
+          </div>
+          <div class="op-card">
+            <span class="op-keyword">AND</span>
+            <p>True only when both the left and right sides are truthy.</p>
+          </div>
+          <div class="op-card">
+            <span class="op-keyword">OR</span>
+            <p>True when either the left or the right side is truthy.</p>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>Evaluation order:</strong> <code>NOT</code> is applied first, then <code>AND</code>, then
+          <code>OR</code>.
+          This matches standard boolean precedence.
+        </div>
+
+        <h3>Example</h3>
+        <div class="code-block">
+          <div class="code-block-header"><span>Template</span></div>
+          <pre><span class="tg">{%</span> <span class="tb">IF</span> <span class="tb">NOT</span> <span class="tv">is_banned</span> <span class="tb">AND</span> <span class="tv">is_active</span> <span class="tb">OR</span> <span class="tv">is_admin</span> <span class="tg">%}</span>
+    Access granted.
+<span class="tg">{%</span> <span class="tb">ENDIF</span> <span class="tg">%}</span></pre>
+        </div>
+        <p>Evaluates as: <code>(NOT is_banned AND is_active) OR is_admin</code></p>
+
+        <h3>Combining NOT with AND</h3>
+        <div class="code-block">
+          <div class="code-block-header"><span>Template</span></div>
+          <pre><span class="tg">{%</span> <span class="tb">IF</span> <span class="tb">NOT</span> <span class="tv">has_errors</span> <span class="tb">AND</span> <span class="tv">is_complete</span> <span class="tg">%}</span>
+    Ready to submit.
+<span class="tg">{%</span> <span class="tb">ELSE</span> <span class="tg">%}</span>
+    Fix issues before submitting.
+<span class="tg">{%</span> <span class="tb">ENDIF</span> <span class="tg">%}</span></pre>
+        </div>
+      </section>
+
+      <!-- ── Loops ────────────────────────────────────────────────── -->
+      <section id="loops">
+        <h2>Loops</h2>
+
+        <div class="code-block">
+          <div class="code-block-header"><span>Syntax</span></div>
+          <pre><span class="tg">{%</span> <span class="tb">FOR</span> <span class="tv">item</span> <span class="tb">IN</span> <span class="tv">collection</span> <span class="tg">%}</span>
+    <span class="tg">{{</span> <span class="tv">item</span> <span class="tg">}}</span>
+<span class="tg">{%</span> <span class="tb">ENDFOR</span> <span class="tg">%}</span></pre>
+        </div>
+
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rule</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Loop variable</td>
+                <td><code>item</code> is available inside the loop body as a variable.</td>
+              </tr>
+              <tr>
+                <td>Iterable</td>
+                <td><code>collection</code> must be a key in <code>context_data</code> whose value is a supported
+                  iterable type.</td>
+              </tr>
+              <tr>
+                <td>Nested loops</td>
+                <td>A loop variable that is itself iterable can be used as the iterable of an inner loop.</td>
+              </tr>
+              <tr>
+                <td>Conditions inside loops</td>
+                <td><code>{% IF item %}</code> and the full condition syntax work inside any loop body.</td>
+              </tr>
+              <tr>
+                <td>Keywords</td>
+                <td>Must be <strong>uppercase</strong>: <code>FOR</code>, <code>IN</code>, <code>ENDFOR</code>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Loop with a condition on the loop variable</h3>
+        <div class="code-block">
+          <div class="code-block-header"><span>Template</span></div>
+          <pre><span class="tg">{%</span> <span class="tb">FOR</span> <span class="tv">score</span> <span class="tb">IN</span> <span class="tv">scores</span> <span class="tg">%}</span>
+    <span class="tg">{%</span> <span class="tb">IF</span> <span class="tv">score</span> <span class="tg">%}</span>
+        Score: <span class="tg">{{</span> <span class="tv">score</span> <span class="tg">}}</span>
+    <span class="tg">{%</span> <span class="tb">ELSE</span> <span class="tg">%}</span>
+        Zero score.
+    <span class="tg">{%</span> <span class="tb">ENDIF</span> <span class="tg">%}</span>
+<span class="tg">{%</span> <span class="tb">ENDFOR</span> <span class="tg">%}</span></pre>
+        </div>
+
+        <h3>Nested loop with empty-group guard</h3>
+        <div class="code-block">
+          <div class="code-block-header"><span>Template</span></div>
+          <pre><span class="tg">{%</span> <span class="tb">FOR</span> <span class="tv">group</span> <span class="tb">IN</span> <span class="tv">groups</span> <span class="tg">%}</span>
+    <span class="tg">{%</span> <span class="tb">IF</span> <span class="tv">group</span> <span class="tg">%}</span>
+        <span class="tg">{%</span> <span class="tb">FOR</span> <span class="tv">item</span> <span class="tb">IN</span> <span class="tv">group</span> <span class="tg">%}</span>
+            Item: <span class="tg">{{</span> <span class="tv">item</span> <span class="tg">}}</span>
+        <span class="tg">{%</span> <span class="tb">ENDFOR</span> <span class="tg">%}</span>
+    <span class="tg">{%</span> <span class="tb">ELSE</span> <span class="tg">%}</span>
+        Empty group.
+    <span class="tg">{%</span> <span class="tb">ENDIF</span> <span class="tg">%}</span>
+<span class="tg">{%</span> <span class="tb">ENDFOR</span> <span class="tg">%}</span></pre>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header"><span>Python</span></div>
+          <pre>context_data <span class="op">=</span> {
+    <span class="str">"groups"</span>: [[], [<span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>], [<span class="num">7</span>, <span class="num">8</span>, <span class="num">9</span>]],
+}</pre>
+        </div>
+      </section>
+
+      <!-- ── Iterable Types ───────────────────────────────────────── -->
+      <section id="types">
+        <h2>Supported Iterable Types</h2>
+        <p>
+          The value of the iterable key in <code>context_data</code> must be one of
+          the five Python types below.
+        </p>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Iteration behaviour</th>
+                <th>Example value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>list</code></td>
+                <td>Elements in order</td>
+                <td><code>[1, 2, 3]</code></td>
+              </tr>
+              <tr>
+                <td><code>tuple</code></td>
+                <td>Elements in order</td>
+                <td><code>(10, 20, 30)</code></td>
+              </tr>
+              <tr>
+                <td><code>dict</code></td>
+                <td>Keys only, insertion order</td>
+                <td><code>{"a": 1, "b": 2}</code></td>
+              </tr>
+              <tr>
+                <td><code>set</code></td>
+                <td>Arbitrary order</td>
+                <td><code>{100, "biscuits"}</code></td>
+              </tr>
+              <tr>
+                <td><code>str</code></td>
+                <td>Character by character</td>
+                <td><code>"hello"</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Indentation ──────────────────────────────────────────── -->
+      <section id="indentation">
+        <h2>Indentation Rules</h2>
+
+        <p>
+          Every block tag — <code>{% IF %}</code>, <code>{% ELIF %}</code>,
+          <code>{% ELSE %}</code>, <code>{% ENDIF %}</code>, <code>{% FOR %}</code>,
+          <code>{% ENDFOR %}</code> — must be placed at a column that is a
+          <strong>multiple of 4 spaces</strong> (0, 4, 8, 12, …).
+        </p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span>Valid indentation</span></div>
+          <pre><span class="tg">{%</span> <span class="tb">IF</span> <span class="tv">condition</span> <span class="tg">%}</span>           <span class="cm">← column 0  (0 × 4)</span>
+    content
+    <span class="tg">{%</span> <span class="tb">FOR</span> <span class="tv">item</span> <span class="tb">IN</span> <span class="tv">items</span> <span class="tg">%}</span>   <span class="cm">← column 4  (1 × 4)</span>
+        <span class="tg">{{</span> <span class="tv">item</span> <span class="tg">}}</span>
+    <span class="tg">{%</span> <span class="tb">ENDFOR</span> <span class="tg">%}</span>               <span class="cm">← column 4  (1 × 4)</span>
+<span class="tg">{%</span> <span class="tb">ENDIF</span> <span class="tg">%}</span>                    <span class="cm">← column 0  (0 × 4)</span></pre>
+        </div>
+
+        <div class="callout">
+          <strong>PlacementError</strong> is raised if any block tag is not at a
+          column that is a multiple of 4.
+        </div>
+      </section>
+
+      <!-- ── Variable Names ───────────────────────────────────────── -->
+      <section id="names">
+        <h2>Variable Names</h2>
+        <p>Variable names must follow Python identifier rules.</p>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rule</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>First character</td>
+                <td>A letter (<code>A–Z</code>, <code>a–z</code>) or underscore (<code>_</code>)</td>
+              </tr>
+              <tr>
+                <td>Remaining characters</td>
+                <td>Letters, digits (<code>0–9</code>), or underscores</td>
+              </tr>
+              <tr>
+                <td>Pattern</td>
+                <td><code>[A-Za-z_][A-Za-z0-9_]*</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-grid">
+          <div class="card">
+            <h3>Valid names</h3>
+            <p><code>username</code> &nbsp; <code>_count</code> &nbsp; <code>item1</code> &nbsp; <code>my_list</code>
+              &nbsp; <code>A</code></p>
+          </div>
+          <div class="card">
+            <h3>Invalid names</h3>
+            <p><code>1item</code> &nbsp; <code>my-list</code> &nbsp; <code>user name</code> &nbsp; <code>@data</code>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Pipeline ─────────────────────────────────────────────── -->
+      <section id="pipeline">
+        <h2>Rendering Pipeline</h2>
+        <p>
+          Every call to <code>run_template_engine()</code> passes through eight
+          stages in order. Each stage is a separate module.
+        </p>
+
+        <div class="pipeline">
+          <div class="pipe-step">
+            <div class="pipe-connector">
+              <div class="pipe-num">1</div>
+              <div class="pipe-line"></div>
+            </div>
+            <div class="pipe-body">
+              <div class="pipe-name">Load</div>
+              <div class="pipe-desc">Read the template file from disk and return it as a string.</div>
+              <span class="pipe-module">engine/file_loader.py</span>
+            </div>
+          </div>
+          <div class="pipe-step">
+            <div class="pipe-connector">
+              <div class="pipe-num">2</div>
+              <div class="pipe-line"></div>
+            </div>
+            <div class="pipe-body">
+              <div class="pipe-name">Pattern Match</div>
+              <div class="pipe-desc">Compile all regex patterns into a single combined expression and find every
+                <code>{{ }}</code>, <code>{% IF %}</code>, <code>{% FOR %}</code>, etc. in the template.
+              </div>
+              <span class="pipe-module">engine/pattern_matcher.py</span>
+            </div>
+          </div>
+          <div class="pipe-step">
+            <div class="pipe-connector">
+              <div class="pipe-num">3</div>
+              <div class="pipe-line"></div>
+            </div>
+            <div class="pipe-body">
+              <div class="pipe-name">Error Check</div>
+              <div class="pipe-desc">Validate each matched pattern against stricter patterns that enforce correct
+                syntax. Raises <code>ConditionError</code>, <code>LoopError</code>, or <code>VariableError</code> on any
+                malformed tag.</div>
+              <span class="pipe-module">engine/error_checker.py</span>
+            </div>
+          </div>
+          <div class="pipe-step">
+            <div class="pipe-connector">
+              <div class="pipe-num">4</div>
+              <div class="pipe-line"></div>
+            </div>
+            <div class="pipe-body">
+              <div class="pipe-name">Structure Check</div>
+              <div class="pipe-desc">Verify every <code>{% IF %}</code> has a matching <code>{% ENDIF %}</code> and
+                every <code>{% FOR %}</code> has a matching <code>{% ENDFOR %}</code>. Raises
+                <code>StructureError</code> on unclosed blocks.
+              </div>
+              <span class="pipe-module">engine/structure_checker.py</span>
+            </div>
+          </div>
+          <div class="pipe-step">
+            <div class="pipe-connector">
+              <div class="pipe-num">5</div>
+              <div class="pipe-line"></div>
+            </div>
+            <div class="pipe-body">
+              <div class="pipe-name">Parse</div>
+              <div class="pipe-desc">Split the template string into a flat ordered list of <em>(static text, match
+                  object)</em> component pairs. This is the data structure the renderer walks.</div>
+              <span class="pipe-module">engine/parser.py</span>
+            </div>
+          </div>
+          <div class="pipe-step">
+            <div class="pipe-connector">
+              <div class="pipe-num">6</div>
+              <div class="pipe-line"></div>
+            </div>
+            <div class="pipe-body">
+              <div class="pipe-name">Validate</div>
+              <div class="pipe-desc">Walk the component list and confirm every variable and iterable used in the
+                template exists in <code>context_data</code> or within the scope of an enclosing loop. Raises
+                <code>VariableError</code> for any missing name.
+              </div>
+              <span class="pipe-module">engine/validator.py</span>
+            </div>
+          </div>
+          <div class="pipe-step">
+            <div class="pipe-connector">
+              <div class="pipe-num">7</div>
+              <div class="pipe-line"></div>
+            </div>
+            <div class="pipe-body">
+              <div class="pipe-name">Iterable Manager</div>
+              <div class="pipe-desc">Convert every top-level iterable in <code>context_data</code> into a custom linked
+                list with a stagnant head (for reset) and a traversal head (for iteration).</div>
+              <span class="pipe-module">engine/iterable_manager.py</span>
+            </div>
+          </div>
+          <div class="pipe-step">
+            <div class="pipe-connector">
+              <div class="pipe-num">8</div>
+              <div class="pipe-line"></div>
+            </div>
+            <div class="pipe-body">
+              <div class="pipe-name">Render</div>
+              <div class="pipe-desc">Walk the component list. For each component: evaluate conditions using the
+                logic-node chain, advance loop iterators via the linked list, substitute variables, and accumulate the
+                rendered output string.</div>
+              <span class="pipe-module">engine/renderer.py</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Error Reference ──────────────────────────────────────── -->
+      <section id="errors">
+        <h2>Error Reference</h2>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Exception</th>
+                <th>Raised when</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>VariableError</code></td>
+                <td>A variable used in the template is not found in <code>context_data</code> or the current loop scope.
+                </td>
+              </tr>
+              <tr>
+                <td><code>ConditionError</code></td>
+                <td>An <code>{% IF %}</code> or <code>{% ELIF %}</code> tag is not written correctly — wrong spacing,
+                  missing keyword, or invalid variable name.</td>
+              </tr>
+              <tr>
+                <td><code>LoopError</code></td>
+                <td>A <code>{% FOR %}</code> or <code>{% ENDFOR %}</code> tag is not written correctly.</td>
+              </tr>
+              <tr>
+                <td><code>StructureError</code></td>
+                <td>An <code>{% IF %}</code> block has no matching <code>{% ENDIF %}</code>, or a <code>{% FOR %}</code>
+                  has no matching <code>{% ENDFOR %}</code>.</td>
+              </tr>
+              <tr>
+                <td><code>PlacementError</code></td>
+                <td>A block tag is not at a column that is a multiple of 4 spaces.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Full Example ─────────────────────────────────────────── -->
+      <section id="example">
+        <h2>Full Example</h2>
+        <p>This is the template shipped with the engine (<code>template.txt</code>) and the context data that drives it.
+        </p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span>context_data (Python)</span></div>
+          <pre>context_data <span class="op">=</span> {
+    <span class="str">"A"</span>:          <span class="kw">True</span>,
+    <span class="str">"B"</span>:          <span class="kw">False</span>,
+    <span class="str">"C"</span>:          <span class="kw">True</span>,
+    <span class="str">"D"</span>:          <span class="kw">True</span>,
+    <span class="str">"E"</span>:          <span class="kw">True</span>,
+    <span class="str">"F"</span>:          <span class="kw">False</span>,
+    <span class="str">"first_name"</span>: <span class="str">"Emmanuel"</span>,
+    <span class="str">"last_name"</span>:  <span class="str">"Obolo"</span>,
+    <span class="str">"farms"</span>:      [[], [<span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>], [<span class="num">7</span>, <span class="num">8</span>, <span class="num">9</span>]],
+    <span class="str">"tomatoes"</span>:   {<span class="str">"tomato1"</span>: <span class="num">1</span>, <span class="str">"tomato2"</span>: <span class="num">2</span>, <span class="str">"tomato3"</span>: <span class="num">3</span>},
+    <span class="str">"containers"</span>: (<span class="num">10</span>, <span class="num">11</span>, <span class="num">12</span>),
+    <span class="str">"labels"</span>:     {<span class="num">100</span>, <span class="str">"biscuits"</span>, <span class="str">"Orange"</span>},
+}</pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block-header"><span>template.txt</span></div>
+          <pre>User Profile: <span class="tg">{{</span> <span class="tv">first_name</span> <span class="tg">}}</span> <span class="tg">{{</span> <span class="tv">last_name</span> <span class="tg">}}</span>
+
+<span class="tg">{%</span> <span class="tb">IF</span> <span class="tv">E</span> <span class="tg">%}</span>
+    Inventory Check:
+    <span class="tg">{%</span> <span class="tb">FOR</span> <span class="tv">container</span> <span class="tb">IN</span> <span class="tv">containers</span> <span class="tg">%}</span>
+        Container ID: <span class="tg">{{</span> <span class="tv">container</span> <span class="tg">}}</span>
+        <span class="tg">{%</span> <span class="tb">IF</span> <span class="tv">D</span> <span class="tg">%}</span>
+            <span class="tg">{%</span> <span class="tb">FOR</span> <span class="tv">farm</span> <span class="tb">IN</span> <span class="tv">farms</span> <span class="tg">%}</span>
+                <span class="tg">{%</span> <span class="tb">IF</span> <span class="tv">farm</span> <span class="tg">%}</span>
+                    Farm Contents:
+                    <span class="tg">{%</span> <span class="tb">FOR</span> <span class="tv">num</span> <span class="tb">IN</span> <span class="tv">farm</span> <span class="tg">%}</span>
+                        Item <span class="tg">{{</span> <span class="tv">num</span> <span class="tg">}}</span>
+                    <span class="tg">{%</span> <span class="tb">ENDFOR</span> <span class="tg">%}</span>
+                <span class="tg">{%</span> <span class="tb">ELIF</span> <span class="tv">C</span> <span class="tg">%}</span>
+                    Farm is empty but C is true.
+                <span class="tg">{%</span> <span class="tb">ELSE</span> <span class="tg">%}</span>
+                    No farm data.
+                <span class="tg">{%</span> <span class="tb">ENDIF</span> <span class="tg">%}</span>
+            <span class="tg">{%</span> <span class="tb">ENDFOR</span> <span class="tg">%}</span>
+        <span class="tg">{%</span> <span class="tb">ELSE</span> <span class="tg">%}</span>
+            No farms checked.
+        <span class="tg">{%</span> <span class="tb">ENDIF</span> <span class="tg">%}</span>
+    <span class="tg">{%</span> <span class="tb">ENDFOR</span> <span class="tg">%}</span>
+<span class="tg">{%</span> <span class="tb">ELSE</span> <span class="tg">%}</span>
+    Inventory not available.
+<span class="tg">{%</span> <span class="tb">ENDIF</span> <span class="tg">%}</span>
+
+Label Report:
+<span class="tg">{%</span> <span class="tb">IF</span> <span class="tv">F</span> <span class="tg">%}</span>
+    No labels to display.
+<span class="tg">{%</span> <span class="tb">ELSE</span> <span class="tg">%}</span>
+    <span class="tg">{%</span> <span class="tb">FOR</span> <span class="tv">label</span> <span class="tb">IN</span> <span class="tv">labels</span> <span class="tg">%}</span>
+        Label Entry: <span class="tg">{{</span> <span class="tv">label</span> <span class="tg">}}</span>
+        <span class="tg">{%</span> <span class="tb">IF</span> <span class="tv">A</span> <span class="tg">%}</span>
+            <span class="tg">{%</span> <span class="tb">FOR</span> <span class="tv">container</span> <span class="tb">IN</span> <span class="tv">containers</span> <span class="tg">%}</span>
+                Container <span class="tg">{{</span> <span class="tv">container</span> <span class="tg">}}</span> linked to <span class="tg">{{</span> <span class="tv">label</span> <span class="tg">}}</span>
+            <span class="tg">{%</span> <span class="tb">ENDFOR</span> <span class="tg">%}</span>
+        <span class="tg">{%</span> <span class="tb">ELIF</span> <span class="tv">C</span> <span class="tg">%}</span>
+            Containers not linked.
+        <span class="tg">{%</span> <span class="tb">ENDIF</span> <span class="tg">%}</span>
+    <span class="tg">{%</span> <span class="tb">ENDFOR</span> <span class="tg">%}</span>
+<span class="tg">{%</span> <span class="tb">ENDIF</span> <span class="tg">%}</span></pre>
+        </div>
+      </section>
+
+    </main>
+  </div><!-- .wrapper -->
+
+  <script>
+    // ─── Theme switcher ───────────────────────────────────────────
+    const buttons = document.querySelectorAll('.theme-btn');
+    const html = document.documentElement;
+
+    function setTheme(theme) {
+      html.setAttribute('data-theme', theme);
+      buttons.forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+      try { localStorage.setItem('te-theme', theme); } catch (_) { }
+    }
+
+    buttons.forEach(btn => btn.addEventListener('click', () => setTheme(btn.dataset.theme)));
+
+    try {
+      const saved = localStorage.getItem('te-theme');
+      if (saved && (saved === 'light' || saved === 'dark')) setTheme(saved);
+    } catch (_) { }
+
+    // ─── Navbar scroll shadow ─────────────────────────────────────
+    const navEl = document.querySelector('nav');
+    window.addEventListener('scroll', () => {
+      navEl.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
+
+    // ─── Active sidebar link on scroll ───────────────────────────
+    const sections = document.querySelectorAll('section[id], div[id]');
+    const sideLinks = document.querySelectorAll('.sidebar a');
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          sideLinks.forEach(a => {
+            a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+          });
+        }
+      });
+    }, { rootMargin: '-15% 0px -65% 0px' });
+
+    sections.forEach(s => observer.observe(s));
+
+    // ─── Staggered section reveal on scroll ──────────────────────
+    const revealObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationPlayState = 'running';
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08 });
+
+    document.querySelectorAll('.content > section').forEach(s => {
+      s.style.animationPlayState = 'paused';
+      revealObserver.observe(s);
+    });
+  </script>
+</body>
+
+</html>

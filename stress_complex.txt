@@ -1,0 +1,107 @@
+== REPORT FOR {{ username }} ==
+
+-- SECTION 1: Empty top-level list (no body should appear) --
+{% FOR item IN empty_list %}
+    SHOULD NOT APPEAR: {{ item }}
+{% ENDFOR %}
+Empty list done.
+
+-- SECTION 2: Empty list inside a TRUE IF (body still invisible) --
+{% IF A %}
+    {% FOR item IN empty_list %}
+        SHOULD NOT APPEAR: {{ item }}
+    {% ENDFOR %}
+    After empty loop inside true IF — visible
+{% ENDIF %}
+
+-- SECTION 3: Empty list inside a FALSE IF (nothing from block) --
+{% IF B %}
+    {% FOR item IN empty_list %}
+        SHOULD NOT APPEAR: {{ item }}
+    {% ENDFOR %}
+{% ENDIF %}
+After false IF block — visible
+
+-- SECTION 4: Non-empty loop with ELIF chain on falsy item --
+{% FOR score IN scores %}
+    {% IF score %}
+        score value: {{ score }}
+    {% ELIF A %}
+        score was zero but A is true
+    {% ELSE %}
+        score was zero and A is false
+    {% ENDIF %}
+{% ENDFOR %}
+
+-- SECTION 5: Sequential loops then IF at same level --
+{% FOR score IN scores %}
+    first: {{ score }}
+{% ENDFOR %}
+{% FOR score IN scores %}
+    second: {{ score }}
+{% ENDFOR %}
+{% IF C %}
+    IF after two sequential loops — visible
+{% ENDIF %}
+
+-- SECTION 6: Outer loop with empty inner list on some iterations --
+{% FOR group IN nested %}
+    group start
+    {% FOR item IN group %}
+        item: {{ item }}
+    {% ENDFOR %}
+    group end
+{% ENDFOR %}
+
+-- SECTION 7: Deeply nested conditions inside a loop --
+{% FOR score IN scores %}
+    {% IF score %}
+        {% IF A %}
+            {% IF NOT B %}
+                score={{ score }} A=true NOT-B=true
+            {% ELSE %}
+                score={{ score }} A=true B=true
+            {% ENDIF %}
+        {% ELIF C %}
+            score={{ score }} A=false C=true
+        {% ELSE %}
+            score={{ score }} A=false C=false
+        {% ENDIF %}
+    {% ELSE %}
+        zero score, skipped inner conditions
+    {% ENDIF %}
+{% ENDFOR %}
+
+-- SECTION 8: String iterable then condition after --
+{% FOR ch IN phrase %}
+    letter: {{ ch }}
+{% ENDFOR %}
+{% IF A %}
+    condition after string loop — visible
+{% ENDIF %}
+
+-- SECTION 9: Loop over nested lists where first element empty --
+{% FOR group IN mixed %}
+    {% IF group %}
+        {% FOR num IN group %}
+            {% IF num %}
+                num {{ num }} is truthy
+            {% ELSE %}
+                num {{ num }} is zero
+            {% ENDIF %}
+        {% ENDFOR %}
+    {% ELSE %}
+        empty group encountered
+    {% ENDIF %}
+{% ENDFOR %}
+
+-- SECTION 10: NOT OR AND combined in loop condition --
+{% FOR score IN scores %}
+    {% IF NOT B OR score %}
+        keep: {{ score }}
+    {% ELSE %}
+        drop: {{ score }}
+    {% ENDIF %}
+{% ENDFOR %}
+
+== END REPORT ==

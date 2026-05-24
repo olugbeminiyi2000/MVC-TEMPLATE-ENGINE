@@ -1,0 +1,5 @@
+Before empty loop: START
+{% FOR item IN empty_list %}
+    inside loop: {{ item }}
+{% ENDFOR %}
+After empty loop: END
