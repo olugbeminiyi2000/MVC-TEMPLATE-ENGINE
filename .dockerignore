@@ -1,0 +1,9 @@
+engine/
+engine_core/
+docs/README.md
+*.py
+*.txt
+*.md
+.git/
+__pycache__/
+venv/

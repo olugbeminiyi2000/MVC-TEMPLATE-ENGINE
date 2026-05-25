@@ -250,18 +250,104 @@
       padding: 2.5rem 1.5rem;
     }
 
+    /* ─── Hamburger button ──────────────────────────────────────── */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      width: 36px; height: 36px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+    .hamburger span {
+      display: block;
+      width: 22px; height: 2px;
+      background: var(--text);
+      border-radius: 2px;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ─── Mobile nav drawer ─────────────────────────────────────── */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      top: 64px; left: 0; right: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      z-index: 99;
+      padding: 0.5rem 1.5rem 1rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      animation: fadeIn 0.2s ease;
+    }
+    .mobile-nav.open { display: block; }
+    .mobile-nav ul { list-style: none; }
+    .mobile-nav li a {
+      display: block;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.9rem; font-weight: 500;
+      transition: color 0.2s ease;
+    }
+    .mobile-nav li:last-child a { border-bottom: none; }
+    .mobile-nav li a:hover { color: var(--accent); text-decoration: none; }
+
+    /* ─── Tablets  781px – 1024px ───────────────────────────────── */
+    @media (min-width: 781px) and (max-width: 1024px) {
+      .wrapper {
+        grid-template-columns: 190px 1fr;
+        padding: 2rem 1.25rem;
+      }
+      .sidebar { padding-right: 1.25rem; }
+      .content { padding-left: 1.75rem; }
+      nav { padding: 0 1.5rem; }
+    }
+
+    /* ─── Mobile  ≤ 780px ───────────────────────────────────────── */
     @media (max-width: 780px) {
       .wrapper {
         grid-template-columns: 1fr;
+        padding: 1.5rem 1.25rem;
       }
+      .sidebar { display: none; }
+      nav .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .content { padding-left: 0; }
+      .hero { padding: 2rem 1.5rem; }
+      h1 { font-size: 2rem; }
+      .hero-sub { max-width: 100%; }
+      .card-grid { grid-template-columns: 1fr; }
+      .op-grid { grid-template-columns: repeat(2, 1fr); }
+      .tbl-wrap { -webkit-overflow-scrolling: touch; }
+    }
 
-      .sidebar {
-        display: none;
+    /* ─── Small phones  ≤ 480px ─────────────────────────────────── */
+    @media (max-width: 480px) {
+      nav {
+        padding: 0 1rem;
+        height: 56px;
       }
-
-      nav .nav-links {
-        display: none;
-      }
+      .mobile-nav { top: 56px; }
+      .nav-logo .logo-text { display: none; }
+      .theme-btn { padding: 0.22rem 0.55rem; font-size: 0.65rem; }
+      .github-link svg { width: 18px; height: 18px; }
+      .wrapper { padding: 1.25rem 1rem; }
+      .hero { padding: 1.5rem 1.1rem; }
+      h1 { font-size: 1.65rem; }
+      h2 { font-size: 1.15rem; }
+      .hero-sub { font-size: 0.9rem; }
+      .code-block pre { font-size: 0.76rem; padding: 0.85rem 0.9rem; }
+      .badge { font-size: 0.68rem; padding: 0.22rem 0.6rem; }
+      .card { padding: 1rem 1.1rem; }
+      .op-grid { grid-template-columns: 1fr; }
+      .pipe-num { width: 30px; height: 30px; font-size: 0.75rem; }
     }
 
     /* ─── Sidebar ───────────────────────────────────────────────── */
@@ -753,7 +839,7 @@
   <!-- ─── Navbar ──────────────────────────────────────────────────── -->
   <nav>
     <div class="nav-logo">
-      <span class="bracket">V1TE</span> V1 Template Engine
+      <span class="bracket">V1TE</span> <span class="logo-text">V1 Template Engine</span>
     </div>
     <ul class="nav-links">
       <li><a href="#quickstart">Quick Start</a></li>
@@ -763,6 +849,9 @@
       <li><a href="#errors">Errors</a></li>
     </ul>
     <div class="theme-bar">
+      <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
       <a class="github-link" href="https://github.com/olugbeminiyi2000/MVC-TEMPLATE-ENGINE" target="_blank"
         rel="noopener" aria-label="View on GitHub">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -774,6 +863,17 @@
       <button class="theme-btn" data-theme="dark">Dark</button>
     </div>
   </nav>
+
+  <!-- ─── Mobile nav drawer ──────────────────────────────────────── -->
+  <div class="mobile-nav" id="mobileNav">
+    <ul>
+      <li><a href="#quickstart">Quick Start</a></li>
+      <li><a href="#variables">Syntax</a></li>
+      <li><a href="#loops">Loops</a></li>
+      <li><a href="#pipeline">Pipeline</a></li>
+      <li><a href="#errors">Errors</a></li>
+    </ul>
+  </div>
 
   <!-- ─── Main layout ─────────────────────────────────────────────── -->
   <div class="wrapper">
@@ -1517,6 +1617,31 @@ Label Report:
     document.querySelectorAll('.content > section').forEach(s => {
       s.style.animationPlayState = 'paused';
       revealObserver.observe(s);
+    });
+
+    // ─── Hamburger menu ─────────────────────────────────────────
+    const hamburger = document.getElementById('hamburgerBtn');
+    const mobileNav = document.getElementById('mobileNav');
+
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('open');
+      mobileNav.classList.toggle('open');
+    });
+
+    mobileNav.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('open');
+        mobileNav.classList.remove('open');
+      });
+    });
+
+    document.addEventListener('click', e => {
+      if (mobileNav.classList.contains('open') &&
+          !mobileNav.contains(e.target) &&
+          !hamburger.contains(e.target)) {
+        hamburger.classList.remove('open');
+        mobileNav.classList.remove('open');
+      }
     });
   </script>
 </body>
